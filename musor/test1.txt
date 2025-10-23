@@ -1,0 +1,29 @@
+#include <stdint.h>
+
+static inline void mmw(uint32_t addr, uint32_t value, uint32_t mask) {
+    volatile uint32_t *reg = (volatile uint32_t *)addr;
+    *reg = (*reg & ~mask) | (value & mask);
+}
+
+int main(void)
+{
+    *(volatile uint32_t *)0x40021014 |= (1u << 17);
+
+    mmw(0x48000000, 0x00000015, 0x0000003F);
+    volatile uint32_t *BSRR = (volatile uint32_t *)0x48000018;
+
+    for (;;) 
+    {
+        *BSRR = 0x00000001;   /* set  PA0..PA2 */
+        for (volatile int i = 0; i < 100000; ++i) __asm__("nop");
+        *BSRR = 0x00010000;   /* reset PA0..PA2 */
+
+        *BSRR = 0x00000002;   /* set  PA0..PA2 */
+        for (volatile int i = 0; i < 100000; ++i) __asm__("nop");
+        *BSRR = 0x00020000;   /* reset PA0..PA2 */
+
+        *BSRR = 0x00000004;   /* set  PA0..PA2 */
+        for (volatile int i = 0; i < 100000; ++i) __asm__("nop");
+        *BSRR = 0x00040000;   /* reset PA0..PA2 */
+    }
+}
