@@ -45,6 +45,7 @@
 #define TIM3_CCR4 vol(TIM3_BASE + 0x40U)
 
 #define I2C1_CR1 vol(I2C1_BASE + 0x00U)
+#define I2C1_TIMINGR vol(I2C1_BASE + 0x10U)
 
 unsigned char flag = 0b00000000;
 uint32_t color = 0x08U;
@@ -108,6 +109,8 @@ void TIM3_Config()
 I2C1_Config()
 {
     write_bits(I2C1_CR1, (0x01U << 0), (0x00U << 0));
+    write_reg(I2C1_TIMINGR, (0x00201D2B));
+    write_bits(I2C1_CR1, (0x01U << 0), (0x01U << 0));
 }
 
 uint32_t Next_Color(uint32_t* col)
@@ -126,6 +129,8 @@ int main(void)
     GPIOB_Config();
 
     TIM3_Config();
+
+    I2C1_Config();
 
     flag = 0b00000001;
 
