@@ -46,6 +46,14 @@
 
 #define I2C1_CR1 vol(I2C1_BASE + 0x00U)
 #define I2C1_TIMINGR vol(I2C1_BASE + 0x10U)
+#define I2C1_CR2 vol(I2C1_BASE + 0x04U)
+#define I2C1_ISR vol(I2C1_BASE + 0x18U)
+#define I2C1_RXDR vol(I2C1_BASE + 0x24U)
+#define I2C1_TXDR vol(I2C1_BASE + 0x28U)
+#define I2C1_ICR vol(I2C1_BASE + 0x1CU)
+
+#define MPU_ADDR 0x68
+#define WHO_AM_I 0x75
 
 unsigned char flag = 0b00000000;
 uint32_t color = 0x08U;
@@ -85,7 +93,7 @@ void GPIOF_Config()
     write_bits(&GPIOF_MODER, (0x0FU << 0), (0x0AU << 0));
     write_bits(&GPIOF_OTYPER, (0x03U << 0), (0x03U << 0));
     write_bits(&GPIOF_OSPEEDR, (0x0FU << 0), (0x0FU << 0));
-    write_bits(&GPIOB_PUPDR, (0x0FU << 0), (0xA0U << 0));
+    write_bits(&GPIOB_PUPDR, (0x0FU << 0), (0x00U << 0));
     write_bits(&GPIOB_AFRL, (0xFFU << 0), (0x11U << 0));
 }
 
@@ -106,11 +114,46 @@ void TIM3_Config()
     write_bits(&TIM3_CR1, (0x01U << 0), (0x01U << 0));
 }
 
-I2C1_Config()
+void I2C1_Config()
 {
-    write_bits(I2C1_CR1, (0x01U << 0), (0x00U << 0));
-    write_reg(I2C1_TIMINGR, (0x00201D2B));
-    write_bits(I2C1_CR1, (0x01U << 0), (0x01U << 0));
+    write_bits(&I2C1_CR1, (0x01U << 0), (0x00U << 0));
+    write_reg(&I2C1_TIMINGR, (0x00201D2B));
+    write_bits(&I2C1_CR1, (0x01U << 0), (0x01U << 0));
+}
+
+uint8_t I2C1_ReadByte()
+{
+    write_bits(&I2C1_CR2, (0x01U << 13), (0x00U << 13));
+    write_bits(&I2C1_CR2, (0x3FFU << 0), (MPU_ADDR << 1));
+    write_bits(&I2C1_CR2, (0x01U << 10), (0x01U << 10));
+    write_bits(&I2C1_CR2, (0xFFU << 16), (0x01U << 16));
+    write_bits(&I2C1_CR2, (0x01U << 13), (0x01U << 13));
+
+    while(!(read_bits(&I2C1_ISR, 0x01U << 1) & 0x01U << 1));
+
+    write_reg(&I2C1_TXDR, WHO_AM_I);
+
+    while(!read_bits(&I2C1_ISR, 0x01U << 5));
+
+    write_bits(&I2C1_ICR, (0x01U << 5), (0x01U << 5));
+
+
+
+    write_bits(&I2C1_CR2, (0x01U << 13), (0x00U << 13));
+    write_bits(&I2C1_CR2, (0x3FFU << 0), (MPU_ADDR << 1));
+    write_bits(&I2C1_CR2, (0x01U << 10), (0x00U << 10));
+    write_bits(&I2C1_CR2, (0xFFU << 16), (0x01U << 16));
+    write_bits(&I2C1_CR2, (0x01U << 13), (0x01U << 13));
+
+    while(!read_bits(&I2C1_ISR, 0x01U << 2));
+
+    uint8_t val = read_bits(&I2C1_RXDR, 0xFFFFFFFF);
+
+    while(!read_bits(&I2C1_ISR, 0x01U << 5));
+
+    write_bits(&I2C1_ICR, (0x01U << 5), (0x01U << 5));
+
+    return val;
 }
 
 uint32_t Next_Color(uint32_t* col)
@@ -127,10 +170,13 @@ int main(void)
 
     GPIOA_Config();
     GPIOB_Config();
+    GPIOF_Config();
 
     TIM3_Config();
 
     I2C1_Config();
+
+    I2C1_ReadByte();
 
     flag = 0b00000001;
 
