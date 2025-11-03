@@ -9,6 +9,7 @@
 #define GPIOF_BASE 0x48001400U
 #define TIM3_BASE 0x40000400U
 #define I2C1_BASE 0x40005400U
+#define USART2_BASE 0x40004400U
 
 #define RCC_AHBENR vol(RCC_BASE + 0x14U)
 #define RCC_APB1ENR vol(RCC_BASE + 0x1CU)
@@ -52,6 +53,12 @@
 #define I2C1_TXDR vol(I2C1_BASE + 0x28U)
 #define I2C1_ICR vol(I2C1_BASE + 0x1CU)
 
+#define USART2_CR1 vol(USART2_BASE + 0x00U)
+#define USART2_CR2 vol(USART2_BASE + 0x04U)
+#define USART2_BRR vol(USART2_BASE + 0x0CU)
+#define USART2_ISR vol(USART2_BASE + 0x1CU)
+#define USART2_TDR vol(USART2_BASE + 0x28U)
+
 #define MPU_ADDR 0x68
 #define WHO_AM_I 0x75
 
@@ -64,6 +71,7 @@ void RCC_EnableClock()
 {
     write_bits(&RCC_APB1ENR, (0x01U << 1), (0x01U << 1)); //TIM3_EN
     write_bits(&RCC_APB1ENR, (0x01U << 21), (0x01U << 21)); //I2C1_EN
+    write_bits(&RCC_APB1ENR, (1U<<17), (1U<<17));  //USART2_EN
     raw_delay(10000);
     write_bits(&RCC_AHBENR, (0x03U << 17), 0x03U << 17); //GPIOA_EN && GPIOB_EN
     write_bits(&RCC_AHBENR, (0x01U << 22), (0x01U << 22)); //GPIOF_EN
@@ -79,6 +87,12 @@ void GPIOA_Config()
     write_bits(&GPIOA_OSPEEDR, (0x0FU << 12), (0x0FU << 12)); //PA6_HS && PA7_HS
     write_bits(&GPIOA_PUPDR, (0x0FU << 12), (0x00U << 12)); //PA6_PUNPD && PA7_PUNPD
     write_bits(&GPIOA_AFRL, (0xFFU << 24), (0x11U << 24)); //PA6_AF1 && PA7_AF1
+
+    write_bits(&GPIOA_MODER, (0x0FU << 4), (0x0AU << 4)); //PA2_AF && PA3_AF
+    write_bits(&GPIOA_OTYPER, (0x03U << 2), (0x00U << 2)); //PA2_PP && PA3_PP
+    write_bits(&GPIOA_OSPEEDR, (0x0FU << 4), (0x0FU << 4)); //PA2_HS && PA3_HS
+    write_bits(&GPIOA_PUPDR, (0x0FU << 4), (0x04U << 4)); //PA2_NPUNPD && PA3_PU
+    write_bits(&GPIOA_AFRL, (0xFFU << 8), (0x11U << 8)); //PA2_AF1 && PA3_AF1
 }
 
 void GPIOB_Config()
@@ -121,6 +135,16 @@ void I2C1_Config()
     write_bits(&I2C1_CR1, (0x01U << 0), (0x00U << 0));
     write_reg(&I2C1_TIMINGR, (0x00201D2B));
     write_bits(&I2C1_CR1, (0x01U << 0), (0x01U << 0));
+}
+
+void USART2_Config()
+{
+    write_bits(&USART2_CR1, (1U<<0), 0);
+    write_reg(&USART2_BRR, 0x0045);
+    write_bits(&USART2_CR2, (3U<<12), 0);
+    write_bits(&USART2_CR1, (1U<<3), (1U<<3));
+    write_bits(&USART2_CR1, (1U<<2), (1U<<2));
+    write_bits(&USART2_CR1, (1U<<0), (1U<<0));
 }
 
 uint8_t I2C1_ReadByte()
@@ -208,6 +232,22 @@ void I2C1_ReadN(uint8_t dev7, uint8_t reg, uint8_t* buf, uint8_t n)
     write_bits(&I2C1_ICR, (1U<<5), (1U<<5));                     // clear STOPF
 }
 
+static inline void usart2_putc(char c) {
+    while(!(read_bits(&USART2_ISR, (1U<<7))));           // TXE=1
+    write_reg(&USART2_TDR, (uint32_t)(uint8_t)c);
+}
+
+static inline void usart2_puts(const char* s) {
+    while(*s) usart2_putc(*s++);
+}
+
+static void usart2_put_i16(int16_t v) {                  // примитивный десятичный вывод
+    char buf[8]; int i=0; if (v<0){ usart2_putc('-'); v=-v; }
+    if (v==0){ usart2_putc('0'); return; }
+    while(v && i<6){ buf[i++] = '0' + (v%10); v/=10; }
+    while(i--) usart2_putc(buf[i]);
+}
+
 uint32_t Next_Color(uint32_t* col)
 {
     raw_delay(500);
@@ -229,6 +269,8 @@ int main(void)
     TIM3_Config();
 
     I2C1_Config();
+
+    USART2_Config();
 
     I2C1_ReadByte();
 
@@ -275,5 +317,13 @@ int main(void)
         color = Next_Color(&color);
 
         I2C1_ReadN(MPU_ADDR, 0x3B, raw, 6);
+
+        int16_t ax = (int16_t)((raw[0]<<8) | raw[1]);
+        int16_t ay = (int16_t)((raw[2]<<8) | raw[3]);
+        int16_t az = (int16_t)((raw[4]<<8) | raw[5]);
+
+        usart2_puts("AX="); usart2_put_i16(ax); usart2_puts("  ");
+        usart2_puts("AY="); usart2_put_i16(ay); usart2_puts("  ");
+        usart2_puts("AZ="); usart2_put_i16(az); usart2_puts("\r\n");
     }
 }
