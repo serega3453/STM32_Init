@@ -123,38 +123,36 @@ void I2C1_Config()
 
 uint8_t I2C1_ReadByte()
 {
-    write_bits(&I2C1_CR2, (0x01U << 13), (0x00U << 13));
-    write_bits(&I2C1_CR2, (0x3FFU << 0), (MPU_ADDR << 1));
-    write_bits(&I2C1_CR2, (0x01U << 10), (0x01U << 10));
-    write_bits(&I2C1_CR2, (0xFFU << 16), (0x01U << 16));
-    write_bits(&I2C1_CR2, (0x01U << 13), (0x01U << 13));
+    // --- WRITE: отправляем номер регистра ---
+    write_bits(&I2C1_CR2, (0x01U << 13), (0x00U << 13));                 // START = 0
+    write_bits(&I2C1_CR2, (0x3FFU << 0),  (MPU_ADDR << 1));              // SADD = addr<<1 (LSB=0)
+    write_bits(&I2C1_CR2, (0x01U << 10),  (0x00U << 10));                // RD_WRN = 0 (write)
+    write_bits(&I2C1_CR2, (0xFFU << 16),  (0x01U << 16));                // NBYTES = 1
+    write_bits(&I2C1_CR2, (0x01U << 25),  (0x00U << 25));                // AUTOEND = 0
+    write_bits(&I2C1_CR2, (0x01U << 13),  (0x01U << 13));                // START = 1
 
-    while(!(read_bits(&I2C1_ISR, 0x01U << 1) & 0x01U << 1));
+    while (!(read_bits(&I2C1_ISR, (0x01U << 1))));                       // ждем TXIS
+    write_reg(&I2C1_TXDR, WHO_AM_I);                                     // шлем регистр
 
-    write_reg(&I2C1_TXDR, WHO_AM_I);
+    while (!(read_bits(&I2C1_ISR, (0x01U << 6))));                       // ждем TC (transfer complete)
 
-    while(!read_bits(&I2C1_ISR, 0x01U << 5));
+    // --- READ: читаем 1 байт с авто-STOP ---
+    write_bits(&I2C1_CR2, (0x01U << 13),  (0x00U << 13));                // START = 0
+    write_bits(&I2C1_CR2, (0x3FFU << 0),  (MPU_ADDR << 1));              // SADD = addr<<1
+    write_bits(&I2C1_CR2, (0x01U << 10),  (0x01U << 10));                // RD_WRN = 1 (read)
+    write_bits(&I2C1_CR2, (0xFFU << 16),  (0x01U << 16));                // NBYTES = 1
+    write_bits(&I2C1_CR2, (0x01U << 25),  (0x01U << 25));                // AUTOEND = 1
+    write_bits(&I2C1_CR2, (0x01U << 13),  (0x01U << 13));                // START = 1
 
-    write_bits(&I2C1_ICR, (0x01U << 5), (0x01U << 5));
+    while (!(read_bits(&I2C1_ISR, (0x01U << 2))));                       // ждем RXNE
+    uint8_t val = (uint8_t)read_bits(&I2C1_RXDR, 0xFFU);                 // забираем байт
 
-
-
-    write_bits(&I2C1_CR2, (0x01U << 13), (0x00U << 13));
-    write_bits(&I2C1_CR2, (0x3FFU << 0), (MPU_ADDR << 1));
-    write_bits(&I2C1_CR2, (0x01U << 10), (0x00U << 10));
-    write_bits(&I2C1_CR2, (0xFFU << 16), (0x01U << 16));
-    write_bits(&I2C1_CR2, (0x01U << 13), (0x01U << 13));
-
-    while(!read_bits(&I2C1_ISR, 0x01U << 2));
-
-    uint8_t val = read_bits(&I2C1_RXDR, 0xFFFFFFFF);
-
-    while(!read_bits(&I2C1_ISR, 0x01U << 5));
-
-    write_bits(&I2C1_ICR, (0x01U << 5), (0x01U << 5));
+    while (!(read_bits(&I2C1_ISR, (0x01U << 5))));                       // ждем STOPF
+    write_bits(&I2C1_ICR, (0x01U << 5), (0x01U << 5));                   // чистим STOPF
 
     return val;
 }
+
 
 uint32_t Next_Color(uint32_t* col)
 {
