@@ -93,8 +93,8 @@ void GPIOF_Config()
     write_bits(&GPIOF_MODER, (0x0FU << 0), (0x0AU << 0));
     write_bits(&GPIOF_OTYPER, (0x03U << 0), (0x03U << 0));
     write_bits(&GPIOF_OSPEEDR, (0x0FU << 0), (0x0FU << 0));
-    write_bits(&GPIOB_PUPDR, (0x0FU << 0), (0x00U << 0));
-    write_bits(&GPIOB_AFRL, (0xFFU << 0), (0x11U << 0));
+    write_bits(&GPIOF_PUPDR, (0x0FU << 0), (0x00U << 0));
+    write_bits(&GPIOF_AFRL, (0xFFU << 0), (0x11U << 0));
 }
 
 void TIM3_Config()
