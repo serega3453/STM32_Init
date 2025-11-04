@@ -1,0 +1,61 @@
+#ifndef REGADDR_H
+#define REGADDR_H
+
+#define vol(addr) (*(volatile uint32_t*)(addr))
+
+#define RCC_BASE 0x40021000U
+#define GPIOA_BASE 0x48000000U
+#define GPIOB_BASE 0x48000400U
+#define GPIOF_BASE 0x48001400U
+#define TIM3_BASE 0x40000400U
+#define I2C1_BASE 0x40005400U
+#define USART2_BASE 0x40004400U
+
+#define RCC_AHBENR vol(RCC_BASE + 0x14U)
+#define RCC_APB1ENR vol(RCC_BASE + 0x1CU)
+
+#define GPIOA_MODER vol(GPIOA_BASE + 0x00U)
+#define GPIOA_OTYPER vol(GPIOA_BASE + 0x04U)
+#define GPIOA_OSPEEDR vol(GPIOA_BASE + 0x08U)
+#define GPIOA_PUPDR vol(GPIOA_BASE + 0x0CU)
+#define GPIOA_AFRL vol(GPIOA_BASE + 0x20U)
+
+#define GPIOB_MODER vol(GPIOB_BASE + 0x00U)
+#define GPIOB_OTYPER vol(GPIOB_BASE + 0x04U)
+#define GPIOB_OSPEEDR vol(GPIOB_BASE + 0x08U)
+#define GPIOB_PUPDR vol(GPIOB_BASE + 0x0CU)
+#define GPIOB_AFRL vol(GPIOB_BASE + 0x20U)
+
+#define GPIOF_MODER vol(GPIOF_BASE + 0x00U)
+#define GPIOF_OTYPER vol(GPIOF_BASE + 0x04U)
+#define GPIOF_OSPEEDR vol(GPIOF_BASE + 0x08U)
+#define GPIOF_PUPDR vol(GPIOF_BASE + 0x0CU)
+#define GPIOF_AFRL vol(GPIOF_BASE + 0x20U)
+
+#define TIM3_CR1 vol(TIM3_BASE + 0x00U)
+#define TIM3_EGR vol(TIM3_BASE + 0x14U)
+#define TIM3_CCMR1 vol(TIM3_BASE + 0x18U)
+#define TIM3_CCMR2 vol(TIM3_BASE + 0x1CU)
+#define TIM3_CCER vol(TIM3_BASE + 0x20U)
+#define TIM3_CNT vol(TIM3_BASE + 0x24U)
+#define TIM3_PSC vol(TIM3_BASE + 0x28U)
+#define TIM3_ARR vol(TIM3_BASE + 0x2CU)
+#define TIM3_CCR1 vol(TIM3_BASE + 0x34U)
+#define TIM3_CCR2 vol(TIM3_BASE + 0x38U)
+#define TIM3_CCR4 vol(TIM3_BASE + 0x40U)
+
+#define I2C1_CR1 vol(I2C1_BASE + 0x00U)
+#define I2C1_TIMINGR vol(I2C1_BASE + 0x10U)
+#define I2C1_CR2 vol(I2C1_BASE + 0x04U)
+#define I2C1_ISR vol(I2C1_BASE + 0x18U)
+#define I2C1_RXDR vol(I2C1_BASE + 0x24U)
+#define I2C1_TXDR vol(I2C1_BASE + 0x28U)
+#define I2C1_ICR vol(I2C1_BASE + 0x1CU)
+
+#define USART2_CR1 vol(USART2_BASE + 0x00U)
+#define USART2_CR2 vol(USART2_BASE + 0x04U)
+#define USART2_BRR vol(USART2_BASE + 0x0CU)
+#define USART2_ISR vol(USART2_BASE + 0x1CU)
+#define USART2_TDR vol(USART2_BASE + 0x28U)
+
+#endif
