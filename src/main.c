@@ -64,22 +64,6 @@ void I2C1_ReadN(uint8_t dev7, uint8_t reg, uint8_t* buf, uint8_t n)
     write_bits(&I2C1_ICR, (1U<<5), (1U<<5));                     // clear STOPF
 }
 
-static inline void usart2_putc(char c) {
-    while(!(read_bits(&USART2_ISR, (1U<<7))));           // TXE=1
-    write_reg(&USART2_TDR, (uint32_t)(uint8_t)c);
-}
-
-static inline void usart2_puts(const char* s) {
-    while(*s) usart2_putc(*s++);
-}
-
-static void usart2_put_i16(int16_t v) {                  // примитивный десятичный вывод
-    char buf[8]; int i=0; if (v<0){ usart2_putc('-'); v=-v; }
-    if (v==0){ usart2_putc('0'); return; }
-    while(v && i<6){ buf[i++] = '0' + (v%10); v/=10; }
-    while(i--) usart2_putc(buf[i]);
-}
-
 static int16_t ax_g100(int16_t raw) 
 { 
     return (int32_t)raw * 100 / 16384;
