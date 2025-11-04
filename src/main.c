@@ -65,7 +65,7 @@
 unsigned char flag = 0b00000000;
 uint32_t color = 0x08U;
 uint8_t val = 0;
-volatile uint8_t raw[6];
+uint8_t raw[6];
 
 void RCC_EnableClock()
 {
@@ -147,38 +147,6 @@ void USART2_Config()
     write_bits(&USART2_CR1, (1U<<0), (1U<<0));
 }
 
-uint8_t I2C1_ReadByte()
-{
-    // --- WRITE: отправляем номер регистра ---
-    write_bits(&I2C1_CR2, (0x01U << 13), (0x00U << 13));                 // START = 0
-    write_bits(&I2C1_CR2, (0x3FFU << 0),  (MPU_ADDR << 1));              // SADD = addr<<1 (LSB=0)
-    write_bits(&I2C1_CR2, (0x01U << 10),  (0x00U << 10));                // RD_WRN = 0 (write)
-    write_bits(&I2C1_CR2, (0xFFU << 16),  (0x01U << 16));                // NBYTES = 1
-    write_bits(&I2C1_CR2, (0x01U << 25),  (0x00U << 25));                // AUTOEND = 0
-    write_bits(&I2C1_CR2, (0x01U << 13),  (0x01U << 13));                // START = 1
-
-    while (!(read_bits(&I2C1_ISR, (0x01U << 1))));                       // ждем TXIS
-    write_reg(&I2C1_TXDR, WHO_AM_I);                                     // шлем регистр
-
-    while (!(read_bits(&I2C1_ISR, (0x01U << 6))));                       // ждем TC (transfer complete)
-
-    // --- READ: читаем 1 байт с авто-STOP ---
-    write_bits(&I2C1_CR2, (0x01U << 13),  (0x00U << 13));                // START = 0
-    write_bits(&I2C1_CR2, (0x3FFU << 0),  (MPU_ADDR << 1));              // SADD = addr<<1
-    write_bits(&I2C1_CR2, (0x01U << 10),  (0x01U << 10));                // RD_WRN = 1 (read)
-    write_bits(&I2C1_CR2, (0xFFU << 16),  (0x01U << 16));                // NBYTES = 1
-    write_bits(&I2C1_CR2, (0x01U << 25),  (0x01U << 25));                // AUTOEND = 1
-    write_bits(&I2C1_CR2, (0x01U << 13),  (0x01U << 13));                // START = 1
-
-    while (!(read_bits(&I2C1_ISR, (0x01U << 2))));                       // ждем RXNE
-    uint8_t val = (uint8_t)read_bits(&I2C1_RXDR, 0xFFU);                 // забираем байт
-
-    while (!(read_bits(&I2C1_ISR, (0x01U << 5))));                       // ждем STOPF
-    write_bits(&I2C1_ICR, (0x01U << 5), (0x01U << 5));                   // чистим STOPF
-
-    return val;
-}
-
 void I2C1_WriteByte(uint8_t dev7, uint8_t reg, uint8_t val)
 {
     // WRITE, NBYTES=2, START
@@ -248,6 +216,47 @@ static void usart2_put_i16(int16_t v) {                  // примитивны
     while(i--) usart2_putc(buf[i]);
 }
 
+static int16_t ax_g100(int16_t raw) { return (int32_t)raw * 100 / 16384; }
+
+static void print_accel_g100(int16_t ax, int16_t ay, int16_t az) {
+    usart2_puts("AX="); usart2_put_i16(ax_g100(ax)); usart2_puts(" ");
+    usart2_puts("AY="); usart2_put_i16(ax_g100(ay)); usart2_puts(" ");
+    usart2_puts("AZ="); usart2_put_i16(ax_g100(az)); usart2_puts("\r\n");
+}
+
+void Color_Change()
+{
+    if (flag >> 0 & 0x01)
+    {
+        if (color >= 750)
+        {
+            color = 0;
+            flag = 0b00000010;
+        }
+        write_reg(&TIM3_CCR1, color);
+    }
+
+    if (flag >> 1 & 0x01)
+    {
+        if (color >= 750)
+        {
+            color = 0;
+            flag = 0b00000100;
+        }
+        write_reg(&TIM3_CCR2, color);
+    }
+
+    if (flag >> 2 & 0x01)
+    {
+        if (color >= 750)
+        {
+            color = 0;
+            flag = 0b00000001;
+        }
+        write_reg(&TIM3_CCR4, color);
+    }
+}
+
 uint32_t Next_Color(uint32_t* col)
 {
     raw_delay(500);
@@ -267,53 +276,14 @@ int main(void)
     GPIOF_Config();
 
     TIM3_Config();
-
     I2C1_Config();
-
     USART2_Config();
-
-    I2C1_ReadByte();
-
-    I2C1_WriteByte(MPU_ADDR, 0x6B, 0x00);
-
-    I2C1_ReadN(MPU_ADDR, 0x6B, &val, 1);
-
-    I2C1_ReadN(MPU_ADDR, 0x3B, raw, 6);
 
     flag = 0b00000001;
 
     for(;;)
     {
-        if (flag >> 0 & 0x01)
-        {
-            if (color >= 750)
-            {
-                color = 0;
-                flag = 0b00000010;
-            }
-            write_reg(&TIM3_CCR1, color);
-        }
-
-        if (flag >> 1 & 0x01)
-        {
-            if (color >= 750)
-            {
-                color = 0;
-                flag = 0b00000100;
-            }
-            write_reg(&TIM3_CCR2, color);
-        }
-
-        if (flag >> 2 & 0x01)
-        {
-            if (color >= 750)
-            {
-                color = 0;
-                flag = 0b00000001;
-            }
-            write_reg(&TIM3_CCR4, color);
-        }
-
+        Color_Change();
         color = Next_Color(&color);
 
         I2C1_ReadN(MPU_ADDR, 0x3B, raw, 6);
@@ -322,8 +292,6 @@ int main(void)
         int16_t ay = (int16_t)((raw[2]<<8) | raw[3]);
         int16_t az = (int16_t)((raw[4]<<8) | raw[5]);
 
-        usart2_puts("AX="); usart2_put_i16(ax); usart2_puts("  ");
-        usart2_puts("AY="); usart2_put_i16(ay); usart2_puts("  ");
-        usart2_puts("AZ="); usart2_put_i16(az); usart2_puts("\r\n");
+        print_accel_g100(ax, ay, az);
     }
 }
