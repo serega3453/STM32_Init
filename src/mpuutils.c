@@ -66,7 +66,7 @@ int16_t ax_g100(int16_t raw)
 
 void print_accel_g100(int16_t ax, int16_t ay, int16_t az)
 {
-    usart2_puts("AX="); usart2_put_i16(ax_g100(ax)); usart2_puts(" ");
-    usart2_puts("AY="); usart2_put_i16(ax_g100(ay)); usart2_puts(" ");
-    usart2_puts("AZ="); usart2_put_i16(ax_g100(az)); usart2_puts("\r\n");
+    usart1_puts("AX="); usart1_put_i16(ax_g100(ax)); usart1_puts(" ");
+    usart1_puts("AY="); usart1_put_i16(ax_g100(ay)); usart1_puts(" ");
+    usart1_puts("AZ="); usart1_put_i16(ax_g100(az)); usart1_puts("\r\n");
 }

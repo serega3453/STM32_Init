@@ -7,6 +7,6 @@ void GPIOB_Config();
 void GPIOF_Config();
 void TIM3_Config();
 void I2C1_Config();
-void USART2_Config();
+void USART1_Config();
 
 #endif

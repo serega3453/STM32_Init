@@ -62,8 +62,8 @@ int main(void)
     GPIOF_Config();
 
     TIM3_Config();
-    I2C1_Config();
-    USART2_Config();
+    //I2C1_Config();
+    //USART1_Config();
 
     mpu_wom_enable_pp_high(MPU_ADDR, 0xF0, 0x08); // порог WOM=0x14, ODR=62.5Hz
 
