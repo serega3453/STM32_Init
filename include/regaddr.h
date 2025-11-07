@@ -13,6 +13,7 @@
 
 #define RCC_AHBENR vol(RCC_BASE + 0x14U)
 #define RCC_APB1ENR vol(RCC_BASE + 0x1CU)
+#define RCC_APB2ENR vol(RCC_BASE + 0x18U)
 
 #define GPIOA_MODER vol(GPIOA_BASE + 0x00U)
 #define GPIOA_OTYPER vol(GPIOA_BASE + 0x04U)
