@@ -60,12 +60,13 @@ int main(void)
     GPIOA_Config();
     GPIOB_Config();
     GPIOF_Config();
-
+    
     TIM3_Config();
-    //I2C1_Config();
-    //USART1_Config();
+    I2C1_Config();
+    USART1_Config();
 
-    mpu_wom_enable_pp_high(MPU_ADDR, 0xF0, 0x08); // порог WOM=0x14, ODR=62.5Hz
+    /* Enable MPU WOM: threshold=0xF0, ODR=0x08 (62.5Hz), DLPF=0x06 (5Hz filtering) */
+    mpu_wom_enable_pp_high(MPU_ADDR, 0xF0, 0x08, 0x06);
 
     flag = 0b00000001;
 
