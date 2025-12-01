@@ -69,7 +69,7 @@ int main(void)
         /* Enable MPU WOM: threshold=0xF0, ODR=0x08 (62.5Hz), DLPF=0x06 (5Hz filtering), AFS_SEL=2 (±8g)
          * Use AFS_SEL=2 (±8g) to avoid saturation on high-impact events while keeping decent sensitivity.
          */
-        mpu_wom_enable_pp_high(MPU_ADDR, 0xF0, 0x08, 0x06, 0x02);
+        mpu_wom_enable_pp_high(MPU_ADDR, 0xFF, 0x08, 0x03, 0x00);
 
     flag = 0b00000001;
 
