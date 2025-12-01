@@ -42,17 +42,17 @@ void GPIOA_Config()
     write_bits(&GPIOA_OSPEEDR, (0x03U << 2), (0x03U << 2)); //PA1_HS
     write_bits(&GPIOA_PUPDR, (0x03U << 2), (0x02U << 2)); //PA1_PD
 
-    //GPIOA PA4 - Logic input
-    write_bits(&GPIOA_MODER, (0x03U << 8), (0x00U << 8)); //PA4_IN
-    write_bits(&GPIOA_OTYPER, (0x01U << 4), (0x00U << 4)); //PA4_PP
-    write_bits(&GPIOA_OSPEEDR, (0x03U << 8), (0x03U << 8)); //PA4_HS
-    write_bits(&GPIOA_PUPDR, (0x03U << 8), (0x01U << 8)); //PA4_PU
+// GPIOA PA2 - Logic input
+write_bits(&GPIOA_MODER,   (0x03U << 4), (0x00U << 4)); // PA2_IN
+write_bits(&GPIOA_OTYPER,  (0x01U << 2), (0x00U << 2)); // PA2_PP  (для входа не важно)
+write_bits(&GPIOA_OSPEEDR, (0x03U << 4), (0x00U << 4)); // PA2_LOW_SPEED
+write_bits(&GPIOA_PUPDR,   (0x03U << 4), (0x01U << 4)); // PA2_PU
 
-    //GPIOA PA5 - MOSFET gate output
-    write_bits(&GPIOA_MODER, (0x03U << 10), (0x01U << 10)); //PA5_OUT
-    write_bits(&GPIOA_OTYPER, (0x01U << 5), (0x00U << 5)); //PA5_PP
-    write_bits(&GPIOA_OSPEEDR, (0x03U << 10), (0x03U << 10)); //PA5_HS
-    write_bits(&GPIOA_PUPDR, (0x03U << 10), (0x00U << 10)); //PA5_PUNPD
+// GPIOA PA3 - MOSFET gate output
+write_bits(&GPIOA_MODER,   (0x03U << 6), (0x01U << 6)); // PA3_OUT
+write_bits(&GPIOA_OTYPER,  (0x01U << 3), (0x00U << 3)); // PA3_PP
+write_bits(&GPIOA_OSPEEDR, (0x03U << 6), (0x03U << 6)); // PA3_HS
+write_bits(&GPIOA_PUPDR,   (0x03U << 6), (0x00U << 6)); // PA3_NO_PULL
 }
 
 void GPIOB_Config()
