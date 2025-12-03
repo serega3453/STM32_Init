@@ -44,6 +44,8 @@ void GPIOF_Config(void);
  */
 void TIM3_Config(void);
 
+void TIM14_Config();
+
 /**
  * Configure I2C1 for MPU6050 communication.
  * - Speed: ~400 kHz (I2C standard mode)

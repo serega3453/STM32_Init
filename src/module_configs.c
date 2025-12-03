@@ -9,6 +9,7 @@
 void RCC_EnableClock()
 {
     write_bits(&RCC_APB1ENR, (0x01U << 1), (0x01U << 1));              /* TIM3_EN */
+    write_bits(&RCC_APB1ENR, (0x01U << 8), (0x01U << 8));                    // TIM14_EN
     write_bits(&RCC_APB1ENR, (0x01U << 21), (0x01U << 21));            /* I2C1_EN */
     write_bits(&RCC_APB2ENR, (0x01U << 14), (0x01U << 14));            /* USART1_EN (on APB2) */
     write_bits(&RCC_APB2ENR, (0x01U << 0), (0x01U << 0));              /* SYSCFG_EN */
@@ -122,6 +123,34 @@ void TIM3_Config()
     write_reg(&TIM3_CCR4, 0x00000000);
     write_reg(&TIM3_EGR, 0x00000001);
     write_bits(&TIM3_CR1, (0x01U << 0), (0x01U << 0));
+}
+
+/**
+ * Configure TIM14 for 1-second periodic interrupt.
+ * Assumes APB1 clock = 8 MHz (default HSI after reset)
+ * - PSC = 7999: divides 8MHz to 1 kHz
+ * - ARR = 999: period = 1000 ticks at 1 kHz = 1 second
+ * - Generates TIM14_IRQHandler interrupt every 1 second
+ */
+void TIM14_Config()
+{
+    /* Disable timer before configuration */
+    write_bits(&TIM14_CR1, (1U<<0), 0);            /* CEN=0: stop timer */
+    
+    /* Configure prescaler and period */
+    write_reg(&TIM14_PSC, 7999);                   /* PSC: 8MHz / 8000 = 1 kHz */
+    write_reg(&TIM14_ARR, 999);                    /* ARR: 1000 ticks = 1 second */
+    write_reg(&TIM14_CNT, 0);                      /* Reset counter */
+    
+    /* Enable update interrupt */
+    write_bits(&TIM14_DIER, (1U<<0), (1U<<0));     /* UIE=1: enable update interrupt */
+    
+    /* Enable NVIC IRQ 19 BEFORE starting timer */
+    volatile uint32_t* NVIC_ISER0 = (volatile uint32_t*)0xE000E100U;
+    *NVIC_ISER0 = (1U << 19);                      /* Enable TIM14_IRQn (IRQ 19) */
+    
+    /* Start timer */
+    write_bits(&TIM14_CR1, (1U<<0), (1U<<0));      /* CEN=1: start timer */
 }
 
 /**

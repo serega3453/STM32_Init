@@ -14,6 +14,7 @@
 #define GPIOB_BASE 0x48000400U        /* GPIO Port B */
 #define GPIOF_BASE 0x48001400U        /* GPIO Port F */
 #define TIM3_BASE 0x40000400U         /* Timer 3 */
+#define TIM14_BASE 0x40002000U        /* Timer 14 */
 #define I2C1_BASE 0x40005400U         /* I2C 1 */
 #define USART1_BASE 0x40013800U       /* UART 1 */
 #define SYSCFG_BASE 0x40010000U       /* SYSCFG */
@@ -67,6 +68,14 @@
 #define TIM3_CCR1 vol(TIM3_BASE + 0x34U)     /* Capture/Compare Register 1 (PWM duty for CH1) */
 #define TIM3_CCR2 vol(TIM3_BASE + 0x38U)     /* Capture/Compare Register 2 (PWM duty for CH2) */
 #define TIM3_CCR4 vol(TIM3_BASE + 0x40U)     /* Capture/Compare Register 4 (PWM duty for CH4) */
+
+#define TIM14_CR1 vol(TIM14_BASE + 0x00U)      /* Control register 1 (CEN=enable, ARPE=auto-reload preload) */
+#define TIM14_DIER vol(TIM14_BASE + 0x0CU)    /* DMA/Interrupt Enable Register (UIE=update interrupt enable) */
+#define TIM14_SR vol(TIM14_BASE + 0x10U)      /* Status register (UIF=update interrupt flag) */
+#define TIM14_EGR vol(TIM14_BASE + 0x14U)     /* Event generation register (UG=update generation) */
+#define TIM14_CNT vol(TIM14_BASE + 0x24U)      /* Counter value (read-only during run) */
+#define TIM14_PSC vol(TIM14_BASE + 0x28U)     /* Prescaler (clock divider) */
+#define TIM14_ARR vol(TIM14_BASE + 0x2CU)     /* Auto-reload register (period - 1) */
 
 /* I2C1 registers */
 #define I2C1_CR1 vol(I2C1_BASE + 0x00U)       /* Control register 1 (PE=enable) */

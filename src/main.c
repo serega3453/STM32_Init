@@ -13,7 +13,24 @@
 
 /* Global state variables for LED PWM control */
 unsigned char flag = 0b00000000;      /* bit0/bit1/bit2 select which LED channel (CCR1/CCR2/CCR4) to illuminate */
-uint32_t color = 0x08U;               /* PWM compare value (0..2399, max is ARR=2399) */
+uint32_t color = 0;               /* PWM compare value (0..2399, max is ARR=2399) */
+
+/* Numbers from 0 to 7 select a desired LED color */
+void Color_Selector(uint8_t color)
+{
+    // бит0 → R (CCR1)
+    if (color & 0x01) write_reg(&TIM3_CCR1, 2399);
+    else              write_reg(&TIM3_CCR1, 0);
+
+    // бит1 → G (CCR2)
+    if (color & 0x02) write_reg(&TIM3_CCR2, 2399);
+    else              write_reg(&TIM3_CCR2, 0);
+
+    // бит2 → B (CCR4)
+    if (color & 0x04) write_reg(&TIM3_CCR4, 2399);
+    else              write_reg(&TIM3_CCR4, 0);
+}
+
 
 /**
  * Cycle through LED channels with PWM intensity ramping.
@@ -93,6 +110,7 @@ int main(void)
     GPIOF_Config();
     
     TIM3_Config();
+    TIM14_Config();
     I2C1_Config();
     USART1_Config();
     EXTI_Config();
@@ -109,6 +127,9 @@ int main(void)
 
     flag = 0b00000001;
 
+    /* Enable global interrupts */
+    __asm("CPSIE i");  /* or use __enable_irq() if available */
+
     /* Infinite loop: cycle LED channels with PWM ramping */
     for(;;) {
         if (exti0_flag) {
@@ -121,7 +142,11 @@ int main(void)
             usart1_puts("PA1 event detected!\r\n");
         }
 
-        Color_Change();
-        color = Next_Color(&color);
+        if (LED_Timer) 
+        {
+            LED_Timer = 0;
+            Color_Selector(color);
+            color = color + 1;
+        }
     }
 }
