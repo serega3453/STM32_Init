@@ -16,6 +16,17 @@
 #define TIM3_BASE 0x40000400U         /* Timer 3 */
 #define I2C1_BASE 0x40005400U         /* I2C 1 */
 #define USART1_BASE 0x40013800U       /* UART 1 */
+#define SYSCFG_BASE 0x40010000U       /* SYSCFG */
+#define EXTI_BASE 0x40010400U         /* EXTI */
+
+/* SYSCFG + EXTI registers */
+#define SYSCFG_EXTICR1 vol(SYSCFG_BASE + 0x08U)   /* EXTI Config for lines 0..3 */
+#define EXTI_IMR vol(EXTI_BASE + 0x00U)            /* Interrupt Mask */
+#define EXTI_EMR vol(EXTI_BASE + 0x04U)            /* Event Mask */
+#define EXTI_RTSR vol(EXTI_BASE + 0x08U)           /* Rising Trigger */
+#define EXTI_FTSR vol(EXTI_BASE + 0x0CU)           /* Falling Trigger */
+#define EXTI_SWIER vol(EXTI_BASE + 0x10U)          /* Software Interrupt Event */
+#define EXTI_PR vol(EXTI_BASE + 0x14U)             /* Pending Register */
 
 /* RCC register offsets */
 #define RCC_AHBENR vol(RCC_BASE + 0x14U)     /* AHB Enable (GPIO clocks) */

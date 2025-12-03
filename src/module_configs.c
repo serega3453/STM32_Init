@@ -151,3 +151,31 @@ void USART1_Config()
     write_bits(&USART1_CR1, (1U<<2), (1U<<2));
     write_bits(&USART1_CR1, (1U<<0), (1U<<0)); /* Enable USART */
 }
+
+/**
+ * Configure EXTI (External Interrupt) for PA0 and PA1.
+ * - PA0 triggers on rising edge (MPU motion detection)
+ * - PA1 triggers on falling edge (external logic)
+ * Both use the same NVIC handler: EXTI0_1_IRQHandler
+ */
+void EXTI_Config(void)
+{
+    /* Step 1: Connect PA0 and PA1 to EXTI0 and EXTI1 lines via SYSCFG */
+    /* EXTI0 <- PA0, EXTI1 <- PA1 (port A = 0) */
+    write_bits(&SYSCFG_EXTICR1, (0x0FU << 0), (0x00U << 0));   // EXTI0 = Port A
+    write_bits(&SYSCFG_EXTICR1, (0x0FU << 4), (0x00U << 4));   // EXTI1 = Port A
+
+    /* Step 2: Configure trigger edges */
+    write_bits(&EXTI_RTSR, (1U << 0), (1U << 0));              // PA0: rising edge
+    write_bits(&EXTI_RTSR, (1U << 1), (1U << 1));              // PA1: rising edge
+
+    /* Step 3: Enable interrupt requests */
+    write_bits(&EXTI_IMR, (1U << 0), (1U << 0));               // Enable EXTI0
+    write_bits(&EXTI_IMR, (1U << 1), (1U << 1));               // Enable EXTI1
+
+    /* Step 4: Enable EXTI0_1_IRQn in NVIC (Nested Vectored Interrupt Controller) */
+    /* NVIC_ISER0 = Interrupt Set-Enable Register 0 */
+    /* IRQn for EXTI0_1 = 5 (see STM32F070 reference manual) */
+    volatile uint32_t* NVIC_ISER0 = (volatile uint32_t*)0xE000E100U;
+    *NVIC_ISER0 = (1U << 5);  // Enable IRQ 5 (EXTI0_1_IRQn)
+}

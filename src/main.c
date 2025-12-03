@@ -4,6 +4,7 @@
 #include <module_configs.h>
 #include <i2cutils.h>
 #include <mpuutils.h>
+#include <interrupts.h>
 
 /* MPU6050 I2C slave address (7-bit, 0x68 = 0b1101000) */
 #define MPU_ADDR 0x68
@@ -13,7 +14,6 @@
 /* Global state variables for LED PWM control */
 unsigned char flag = 0b00000000;      /* bit0/bit1/bit2 select which LED channel (CCR1/CCR2/CCR4) to illuminate */
 uint32_t color = 0x08U;               /* PWM compare value (0..2399, max is ARR=2399) */
-uint8_t val = 0;                      /* Reserved for future use */
 
 /**
  * Cycle through LED channels with PWM intensity ramping.
@@ -95,6 +95,7 @@ int main(void)
     TIM3_Config();
     I2C1_Config();
     USART1_Config();
+    EXTI_Config();
 
     /**
      * Enable MPU6050 WOM (Wake-On-Motion).
@@ -109,8 +110,17 @@ int main(void)
     flag = 0b00000001;
 
     /* Infinite loop: cycle LED channels with PWM ramping */
-    for(;;)
-    {
+    for(;;) {
+        if (exti0_flag) {
+            exti0_flag = 0;
+            usart1_puts("PA0 event detected!\r\n");
+        }
+
+        if (exti1_flag) {
+            exti1_flag = 0;
+            usart1_puts("PA1 event detected!\r\n");
+        }
+
         Color_Change();
         color = Next_Color(&color);
     }

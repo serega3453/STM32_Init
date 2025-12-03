@@ -59,4 +59,12 @@ void I2C1_Config(void);
  */
 void USART1_Config(void);
 
+/**
+ * Configure EXTI (External Interrupt) lines 0 and 1.
+ * - Configures SYSCFG_EXTICR1 to route PA0/PA1 to EXTI0/EXTI1
+ * - Sets rising-edge triggers for both lines
+ * - Enables interrupt mask and NVIC IRQ#5 (EXTI0_1_IRQn)
+ */
+void EXTI_Config(void);
+
 #endif
