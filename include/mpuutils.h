@@ -1,3 +1,5 @@
+#define MPU_ADDR 0x68
+
 /**
  * MPU6050 accelerometer helper functions.
  * Provides initialization, raw data reading, and basic motion detection (WOM) setup.

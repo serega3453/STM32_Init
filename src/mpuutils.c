@@ -4,8 +4,6 @@
 #include <mpuutils.h>
 #include <i2cutils.h>
 
-#define MPU_ADDR 0x68
-
 uint8_t raw[6];
 
 /* Current accelerometer full-scale selection (AFS_SEL):
@@ -60,23 +58,34 @@ void mpu_wom_enable_pp_high(uint8_t dev7, uint8_t thr, uint8_t lp_odr, uint8_t d
     I2C1_WriteByte(dev7, 0x1F, thr);    // WOM_THR
     I2C1_WriteByte(dev7, 0x1E, lp_odr); // LP_ACCEL_ODR
 
-    // 6) Configure INT pin: active-high, push-pull
-    I2C1_WriteByte(dev7, 0x37, 0x30);   // INT_PIN_CFG
+    /*
+     * 6) Configure INT pin behaviour. To avoid a spurious latched INT while
+     * configuring the device, temporarily configure INT without latch enabled
+     * then clear any pending status. After the low-power reference period we
+     * set the desired latch/polarity and enable the Motion INT.
+     */
+    /* Temporary INT config: active-high, push-pull, no latch */
+    I2C1_WriteByte(dev7, 0x37, 0x10);   // INT_PIN_CFG (temporary)
 
-    // 7) Clear any pending status to avoid a spurious INT
-    I2C1_ReadN(dev7, 0x3A, &d, 1);      // INT_STATUS
+    /* 7) Clear any pending status immediately to avoid a spurious INT */
+    I2C1_ReadN(dev7, 0x3A, &d, 1);      // INT_STATUS (clears pending)
 
-    // 8) Enter low-power cycle mode (enable WOM but keep INT disabled for now)
+    /* 8) Enter low-power cycle mode (enable WOM but keep INT disabled for now) */
     I2C1_WriteByte(dev7, 0x6B, 0x20);   // PWR_MGMT_1: CYCLE=1
 
-    // 9) Pause while WOM establishes reference acceleration (~60 ms)
+    /* 9) Pause while WOM establishes reference acceleration (~60 ms) */
     raw_delay(500000);  // ~60 ms, can be slightly longer
 
-    // 10) Clear status again
+    /* 10) Clear status again after reference established */
     I2C1_ReadN(dev7, 0x3A, &d, 1);
 
-    // 11) Finally enable Motion INT (bit 6)
+    /* 11) Now program final INT_PIN behaviour (active-high, push-pull, latch) */
+    I2C1_WriteByte(dev7, 0x37, 0x30);   // INT_PIN_CFG (final)
+
+    /* 12) Finally enable Motion INT (bit 6) */
     I2C1_WriteByte(dev7, 0x38, 0x40);   // INT_ENABLE (bit6)
+
+    usart1_puts("MPU6050 WOM enabled\r\n");
 }
 
 /**
