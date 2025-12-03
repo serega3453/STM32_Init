@@ -1,29 +1,43 @@
 #include <regutils.h>
 #include <regaddr.h>
 
+/**
+ * Enable clock gates for all peripherals used in this application.
+ * Enables: TIM3, I2C1, USART1 (APB1/APB2), SYSCFG, and GPIO ports A/B/F (AHB).
+ * Includes small delays to allow clock stabilization before configuration.
+ */
 void RCC_EnableClock()
 {
-    write_bits(&RCC_APB1ENR, (0x01U << 1), (0x01U << 1)); //TIM3_EN
-    write_bits(&RCC_APB1ENR, (0x01U << 21), (0x01U << 21)); //I2C1_EN
-    write_bits(&RCC_APB2ENR, (0x01U << 14), (0x01U << 14));  //USART1_EN
-    write_bits(&RCC_APB2ENR, (0x01U << 0), (0x01U << 0)); //SYSCFG_EN
+    write_bits(&RCC_APB1ENR, (0x01U << 1), (0x01U << 1));              /* TIM3_EN */
+    write_bits(&RCC_APB1ENR, (0x01U << 21), (0x01U << 21));            /* I2C1_EN */
+    write_bits(&RCC_APB2ENR, (0x01U << 14), (0x01U << 14));            /* USART1_EN (on APB2) */
+    write_bits(&RCC_APB2ENR, (0x01U << 0), (0x01U << 0));              /* SYSCFG_EN */
     raw_delay(10000);
-    write_bits(&RCC_AHBENR, (0x03U << 17), 0x03U << 17); //GPIOA_EN && GPIOB_EN
-    write_bits(&RCC_AHBENR, (0x01U << 22), (0x01U << 22)); //GPIOF_EN
+    write_bits(&RCC_AHBENR, (0x03U << 17), 0x03U << 17);               /* GPIOA_EN && GPIOB_EN */
+    write_bits(&RCC_AHBENR, (0x01U << 22), (0x01U << 22));             /* GPIOF_EN */
 
     raw_delay(10000);
 }
 
+/**
+ * Configure GPIOA pins for project use:
+ * - PA6, PA7: TIM3 PWM outputs (LED channels 0,1) via AF1
+ * - PA9, PA10: USART1 TX/RX (AF1) for serial communication
+ * - PA0: MPU6050 interrupt input (low-active)
+ * - PA1: External interrupt/logic input
+ * - PA2: Logic input (pull-up)
+ * - PA3: Digital output (MOSFET gate control, push-pull, high-speed)
+ */
 void GPIOA_Config()
 {
-    //GPIOA PA6, PA7 - LED PWM
+    /* PA6, PA7 - TIM3 PWM outputs (LED channels) */
     write_bits(&GPIOA_MODER, (0x0FU << 12), (0x0AU << 12)); //PA6_AF && PA7_AF
     write_bits(&GPIOA_OTYPER, (0x03U << 6), (0x00U << 6)); //PA6_PP && PA7_PP
     write_bits(&GPIOA_OSPEEDR, (0x0FU << 12), (0x0FU << 12)); //PA6_HS && PA7_HS
     write_bits(&GPIOA_PUPDR, (0x0FU << 12), (0x00U << 12)); //PA6_PUNPD && PA7_PUNPD
     write_bits(&GPIOA_AFRL, (0xFFU << 24), (0x11U << 24)); //PA6_AF1 && PA7_AF1
 
-    // GPIOA PA9, PA10 - USART1
+    /* PA9, PA10 - USART1 TX/RX (AF1) */
     write_bits(&GPIOA_MODER, (0x0FU << 18), (0x0AU << 18)); // PA9_AF && PA10_AF
     write_bits(&GPIOA_OTYPER, (0x03U << 9), (0x00U << 9));  // push-pull
     write_bits(&GPIOA_OSPEEDR, (0x0FU << 18), (0x0FU << 18)); // high speed
@@ -42,22 +56,26 @@ void GPIOA_Config()
     write_bits(&GPIOA_OSPEEDR, (0x03U << 2), (0x03U << 2)); //PA1_HS
     write_bits(&GPIOA_PUPDR, (0x03U << 2), (0x02U << 2)); //PA1_PD
 
-// GPIOA PA2 - Logic input
-write_bits(&GPIOA_MODER,   (0x03U << 4), (0x00U << 4)); // PA2_IN
-write_bits(&GPIOA_OTYPER,  (0x01U << 2), (0x00U << 2)); // PA2_PP  (для входа не важно)
-write_bits(&GPIOA_OSPEEDR, (0x03U << 4), (0x00U << 4)); // PA2_LOW_SPEED
-write_bits(&GPIOA_PUPDR,   (0x03U << 4), (0x01U << 4)); // PA2_PU
+    /* PA2 - Logic input with pull-up (reserved for future use) */
+    write_bits(&GPIOA_MODER,   (0x03U << 4), (0x00U << 4));           /* PA2_IN */
+    write_bits(&GPIOA_OTYPER,  (0x01U << 2), (0x00U << 2));           /* PA2_PP (push-pull not critical for input) */
+    write_bits(&GPIOA_OSPEEDR, (0x03U << 4), (0x00U << 4));           /* PA2_LOW_SPEED */
+    write_bits(&GPIOA_PUPDR,   (0x03U << 4), (0x01U << 4));           /* PA2_PU (pull-up) */
 
-// GPIOA PA3 - MOSFET gate output
-write_bits(&GPIOA_MODER,   (0x03U << 6), (0x01U << 6)); // PA3_OUT
-write_bits(&GPIOA_OTYPER,  (0x01U << 3), (0x00U << 3)); // PA3_PP
-write_bits(&GPIOA_OSPEEDR, (0x03U << 6), (0x03U << 6)); // PA3_HS
-write_bits(&GPIOA_PUPDR,   (0x03U << 6), (0x00U << 6)); // PA3_NO_PULL
+    /* PA3 - MOSFET gate output (digital push-pull, high-speed) */
+    write_bits(&GPIOA_MODER,   (0x03U << 6), (0x01U << 6));           /* PA3_OUT */
+    write_bits(&GPIOA_OTYPER,  (0x01U << 3), (0x00U << 3));           /* PA3_PP (push-pull) */
+    write_bits(&GPIOA_OSPEEDR, (0x03U << 6), (0x03U << 6));           /* PA3_HS (high-speed) */
+    write_bits(&GPIOA_PUPDR,   (0x03U << 6), (0x00U << 6));           /* PA3_NO_PULL */
 }
 
+/**
+ * Configure GPIOB pins for project use:
+ * - PB1: TIM3 PWM output (LED channel 2) via AF1
+ */
 void GPIOB_Config()
 {
-    ///GPIOB PB1 - LED PWM
+    /* PB1 - TIM3 PWM output (LED channel 2) via AF1 */
     write_bits(&GPIOB_MODER, (0x03U << 2), (0x02U << 2));
     write_bits(&GPIOB_OTYPER, (0x01U << 1), (0x00U << 1));
     write_bits(&GPIOB_OSPEEDR, (0x03U << 2), (0x03U << 2));
@@ -65,9 +83,13 @@ void GPIOB_Config()
     write_bits(&GPIOB_AFRL, (0x0FU << 4), (0x01U << 4));
 }
 
+/**
+ * Configure GPIOF pins for project use:
+ * - PF0, PF1: I2C1 SCL/SDA (open-drain, pull-ups built into I2C bus)
+ */
 void GPIOF_Config()
 {
-    //GPIOF PF0, PF1 - I2C1
+    /* PF0, PF1 - I2C1 SCL/SDA (open-drain, I2C bus pull-ups required externally) */
     write_bits(&GPIOF_MODER, (0x0FU << 0), (0x0AU << 0));
     write_bits(&GPIOF_OTYPER, (0x03U << 0), (0x03U << 0));
     write_bits(&GPIOF_OSPEEDR, (0x0FU << 0), (0x0FU << 0));
@@ -75,8 +97,18 @@ void GPIOF_Config()
     write_bits(&GPIOF_AFRL, (0xFFU << 0), (0x11U << 0));
 }
 
+/**
+ * Configure TIM3 for PWM generation on channels 1, 2, 4.
+ * Configuration:
+ * - PSC = 0 (no prescale)
+ * - ARR = 2399 (PWM period; 0..2399 gives ~16.7 kHz at 48 MHz core freq)
+ * - CCMR1/CCMR2: PWM mode (mode 1 or 2, output on compare match)
+ * - CCER: enables all three outputs (CC1E, CC2E, CC4E)
+ * - CCR1/CCR2/CCR4: set to 0 initially (0% duty cycle, can be changed in main loop)
+ */
 void TIM3_Config()
 {
+    /* Disable timer during configuration */
     write_bits(&TIM3_CR1, (0x01U << 0), (0x00U << 0));
     write_bits(&TIM3_CR1, (0x01U << 7), (0x01U << 7));
     write_reg(&TIM3_PSC, 0x00000000);
@@ -92,19 +124,30 @@ void TIM3_Config()
     write_bits(&TIM3_CR1, (0x01U << 0), (0x01U << 0));
 }
 
+/**
+ * Configure I2C1 for communication with MPU6050.
+ * Timing: configured for ~400 kHz (I2C standard mode) at 48 MHz core frequency.
+ * TIMINGR register is pre-calculated: 0x00201D2B.
+ */
 void I2C1_Config()
 {
+    /* Disable I2C before writing TIMINGR (register is locked when I2C is enabled) */
     write_bits(&I2C1_CR1, (0x01U << 0), (0x00U << 0));
     write_reg(&I2C1_TIMINGR, (0x00201D2B));
     write_bits(&I2C1_CR1, (0x01U << 0), (0x01U << 0));
 }
 
+/**
+ * Configure USART1 for serial communication (debugging, data logging).
+ * Baudrate: 115200 bps (BRR = 0x0045 for 48 MHz PCLK).
+ * Data bits: 8, Stop bits: 1, Parity: none, Flow control: none.
+ */
 void USART1_Config()
 {
-    write_bits(&USART1_CR1, (1U<<0), 0);
+    write_bits(&USART1_CR1, (1U<<0), 0);        /* Disable USART before configuration */
     write_reg(&USART1_BRR, 0x0045);
     write_bits(&USART1_CR2, (3U<<12), 0);
     write_bits(&USART1_CR1, (1U<<3), (1U<<3));
     write_bits(&USART1_CR1, (1U<<2), (1U<<2));
-    write_bits(&USART1_CR1, (1U<<0), (1U<<0));
+    write_bits(&USART1_CR1, (1U<<0), (1U<<0)); /* Enable USART */
 }
