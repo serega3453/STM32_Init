@@ -18,7 +18,7 @@ void EXTI0_1_IRQHandler(void)
         exti0_flag = 1;
         uint8_t istat = 0;
         /* Clear device INT by reading INT_STATUS (clears latched interrupt) */
-        I2C1_ReadN(MPU_ADDR, 0x3A, &istat, 1);
+        //I2C1_ReadN(MPU_ADDR, 0x3A, &istat, 1);
         write_bits(&EXTI_PR, (1U << 0), (1U << 0));
     }
 

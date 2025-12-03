@@ -36,6 +36,10 @@ void mpu_wom_enable_pp_high(uint8_t dev7, uint8_t thr, uint8_t lp_odr, uint8_t d
 {
     uint8_t d;
 
+    /* 0) Soft reset MPU6050 to clear any leftover state (INT flags, etc.) */
+    I2C1_WriteByte(dev7, 0x6B, 0x80);   // PWR_MGMT_1: DEVICE_RESET=1
+    raw_delay(100000);                  // Wait ~15 ms for reset to complete
+    
     // 1) Wake up, keep only accelerometer enabled
     I2C1_WriteByte(dev7, 0x6B, 0x00);   // PWR_MGMT_1: SLEEP=0, CYCLE=0
     I2C1_WriteByte(dev7, 0x6C, 0x07);   // PWR_MGMT_2: GyroXYZ off, Accel on
