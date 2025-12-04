@@ -24,9 +24,9 @@ void RCC_EnableClock()
  * Configure GPIOA pins for project use:
  * - PA6, PA7: TIM3 PWM outputs (LED channels 0,1) via AF1
  * - PA9, PA10: USART1 TX/RX (AF1) for serial communication
- * - PA0: MPU6050 interrupt input
- * - PA1: External interrupt/logic input
- * - PA2: Logic input
+ * - PA0: MPU6050 interrupt input (rising edge)
+ * - PA1: Contactor interrupt input (rising edge)
+ * - PA2: FCU interrupt input (rising edge)
  * - PA3: Digital output (MOSFET gate control, push-pull, high-speed)
  */
 void GPIOA_Config()
@@ -51,16 +51,16 @@ void GPIOA_Config()
     write_bits(&GPIOA_OSPEEDR, (0x03U << 0), (0x03U << 0)); //PA0_HS
     write_bits(&GPIOA_PUPDR, (0x03U << 0), (0x02U << 0)); //PA0_PD
 
-    //GPIOA PA1 - Input (External INT)
+    //GPIOA PA1 - Input (Contactor INT)
     write_bits(&GPIOA_MODER, (0x03U << 2), (0x00U << 2)); //PA1_IN
     write_bits(&GPIOA_OTYPER, (0x01U << 1), (0x00U << 1)); //PA1_PP
     write_bits(&GPIOA_OSPEEDR, (0x03U << 2), (0x03U << 2)); //PA1_HS
     write_bits(&GPIOA_PUPDR, (0x03U << 2), (0x02U << 2)); //PA1_PD
 
-    /* PA2 - Logic input (reserved for future use) */
+    /* PA2 - Input (FCU INT) */
     write_bits(&GPIOA_MODER,   (0x03U << 4), (0x00U << 4));           /* PA2_IN */
-    write_bits(&GPIOA_OTYPER,  (0x01U << 2), (0x00U << 2));           /* PA2_PP (push-pull not critical for input) */
-    write_bits(&GPIOA_OSPEEDR, (0x03U << 4), (0x00U << 4));           /* PA2_LOW_SPEED */
+    write_bits(&GPIOA_OTYPER,  (0x01U << 2), (0x00U << 2));           /* PA2_PP */
+    write_bits(&GPIOA_OSPEEDR, (0x03U << 4), (0x03U << 4));           /* PA2_HS */
     write_bits(&GPIOA_PUPDR,   (0x03U << 4), (0x02U << 4));           /* PA2_PD */
 
     /* PA3 - MOSFET gate output (digital push-pull, high-speed) */
@@ -182,29 +182,37 @@ void USART1_Config()
 }
 
 /**
- * Configure EXTI (External Interrupt) for PA0 and PA1.
- * - PA0 triggers on rising edge (MPU motion detection)
- * - PA1 triggers on falling edge (external logic)
- * Both use the same NVIC handler: EXTI0_1_IRQHandler
+ * Configure EXTI (External Interrupt) for PA0, PA1, PA2.
+ * - PA0 (EXTI0): MPU6050 motion detection (rising edge)
+ * - PA1 (EXTI1): Contactor interrupt (rising edge)
+ * - PA2 (EXTI2): FCU interrupt (rising edge)
+ * EXTI0/EXTI1 share EXTI0_1_IRQHandler (IRQ #5)
+ * EXTI2/EXTI3 share EXTI2_3_IRQHandler (IRQ #6)
  */
 void EXTI_Config(void)
 {
-    /* Step 1: Connect PA0 and PA1 to EXTI0 and EXTI1 lines via SYSCFG */
-    /* EXTI0 <- PA0, EXTI1 <- PA1 (port A = 0) */
+    /* Step 1: Connect PA0, PA1, PA2 to EXTI0, EXTI1, EXTI2 lines via SYSCFG */
+    /* EXTI0 <- PA0, EXTI1 <- PA1, EXTI2 <- PA2 (port A = 0) */
     write_bits(&SYSCFG_EXTICR1, (0x0FU << 0), (0x00U << 0));   // EXTI0 = Port A
     write_bits(&SYSCFG_EXTICR1, (0x0FU << 4), (0x00U << 4));   // EXTI1 = Port A
+    write_bits(&SYSCFG_EXTICR1, (0x0FU << 8), (0x00U << 8));   // EXTI2 = Port A
 
-    /* Step 2: Configure trigger edges */
-    write_bits(&EXTI_RTSR, (1U << 0), (1U << 0));              // PA0: rising edge
-    write_bits(&EXTI_RTSR, (1U << 1), (1U << 1));              // PA1: rising edge
+    /* Step 2: Configure trigger edges (all rising edge) */
+    write_bits(&EXTI_RTSR, (1U << 0), (1U << 0));              // EXTI0: rising edge
+    write_bits(&EXTI_RTSR, (1U << 1), (1U << 1));              // EXTI1: rising edge
+    write_bits(&EXTI_RTSR, (1U << 2), (1U << 2));              // EXTI2: rising edge
 
     /* Step 3: Enable interrupt requests */
     write_bits(&EXTI_IMR, (1U << 0), (1U << 0));               // Enable EXTI0
     write_bits(&EXTI_IMR, (1U << 1), (1U << 1));               // Enable EXTI1
+    write_bits(&EXTI_IMR, (1U << 2), (1U << 2));               // Enable EXTI2
 
     /* Step 4: Enable EXTI0_1_IRQn in NVIC (Nested Vectored Interrupt Controller) */
-    /* NVIC_ISER0 = Interrupt Set-Enable Register 0 */
-    /* IRQn for EXTI0_1 = 5 (see STM32F070 reference manual) */
+    /* IRQ #5 for EXTI0_1 */
     volatile uint32_t* NVIC_ISER0 = (volatile uint32_t*)0xE000E100U;
     *NVIC_ISER0 = (1U << 5);  // Enable IRQ 5 (EXTI0_1_IRQn)
+    
+    /* Step 5: Enable EXTI2_3_IRQn in NVIC */
+    /* IRQ #6 for EXTI2_3 */
+    *NVIC_ISER0 = (1U << 6);  // Enable IRQ 6 (EXTI2_3_IRQn)
 }

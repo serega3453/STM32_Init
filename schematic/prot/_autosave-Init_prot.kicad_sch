@@ -7161,12 +7161,13 @@
 				(hide yes)
 			)
 		)
-		(property "Value" "Logic IN"
-			(at 190.5 62.23 0)
+		(property "Value" "Contactor INIT"
+			(at 193.04 58.4199 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
+				(justify right)
 			)
 		)
 		(property "Footprint" ""
@@ -7567,7 +7568,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "FC"
+		(property "Value" "FCU"
 			(at 212.09 26.6699 90)
 			(effects
 				(font
@@ -7843,7 +7844,7 @@
 				(hide yes)
 			)
 		)
-		(property "Value" "FCU INIT"
+		(property "Value" "Contactor INIT"
 			(at 107.95 96.5199 90)
 			(effects
 				(font
@@ -10042,7 +10043,7 @@
 				(hide yes)
 			)
 		)
-		(property "Value" "Logic IN"
+		(property "Value" "FCU Init"
 			(at 107.95 99.0599 90)
 			(effects
 				(font

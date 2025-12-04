@@ -4,16 +4,23 @@
 #include <stdint.h>
 
 /* Flags set by ISR, read by main loop */
-extern volatile uint8_t exti0_flag;  /* PA0 interrupt occurred */
-extern volatile uint8_t exti1_flag;  /* PA1 interrupt occurred */
+extern volatile uint8_t exti0_flag;  /* PA0 (MPU INT) interrupt occurred */
+extern volatile uint8_t exti1_flag;  /* PA1 (Contactor INT) interrupt occurred */
+extern volatile uint8_t exti2_flag;  /* PA2 (FCU INT) interrupt occurred */
 
 extern volatile uint8_t LED_Timer;  /* TIM14 update interrupt occurred */
 
 /**
  * EXTI0_1 Interrupt Handler.
- * Sets exti0_flag or exti1_flag depending on which line triggered.
+ * Handles PA0 (MPU INT) and PA1 (Contactor INT).
  */
 void EXTI0_1_IRQHandler(void);
+
+/**
+ * EXTI2_3 Interrupt Handler.
+ * Handles PA2 (FCU INT) and PA3 (unused).
+ */
+void EXTI2_3_IRQHandler(void);
 
 void TIM14_IRQHandler(void);
 

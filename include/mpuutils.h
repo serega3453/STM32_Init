@@ -41,3 +41,5 @@ int16_t ax_g100(int16_t raw);
  * ax, ay, az - acceleration values in units of g*100 (typically from ax_g100 conversion)
  */
 void print_accel_g100(int16_t ax, int16_t ay, int16_t az);
+
+void clear_mpu_int(void);

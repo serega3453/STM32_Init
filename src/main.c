@@ -134,12 +134,17 @@ int main(void)
     for(;;) {
         if (exti0_flag) {
             exti0_flag = 0;
-            usart1_puts("PA0 event detected!\r\n");
+            usart1_puts("PA0 (MPU INT) detected!\r\n");
         }
 
         if (exti1_flag) {
             exti1_flag = 0;
-            usart1_puts("PA1 event detected!\r\n");
+            usart1_puts("PA1 (Contactor INT) detected!\r\n");
+        }
+
+        if (exti2_flag) {
+            exti2_flag = 0;
+            usart1_puts("PA2 (FCU INT) detected!\r\n");
         }
 
         if (LED_Timer) 

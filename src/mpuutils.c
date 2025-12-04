@@ -113,3 +113,9 @@ void print_accel_g100(int16_t ax, int16_t ay, int16_t az)
     usart1_puts("AY="); usart1_put_i16(ax_g100(ay)); usart1_puts(" ");
     usart1_puts("AZ="); usart1_put_i16(ax_g100(az)); usart1_puts("\r\n");
 }
+
+void clear_mpu_int(void)
+{
+    uint8_t d;
+    I2C1_ReadN(MPU_ADDR, 0x3A, &d, 1);      // INT_STATUS (clears pending)
+}
