@@ -134,6 +134,9 @@ int main(void)
     for(;;) {
         if (exti0_flag) {
             exti0_flag = 0;
+
+            write_reg(&GPIOA_BSRR, 0x01 << 3);
+
             usart1_puts("PA0 (MPU INT) detected!\r\n");
         }
 

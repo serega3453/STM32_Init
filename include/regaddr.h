@@ -41,6 +41,7 @@
 #define GPIOA_PUPDR vol(GPIOA_BASE + 0x0CU)    /* Pull-up/pull-down (00=none, 01=pull-up, 10=pull-down) */
 #define GPIOA_AFRL vol(GPIOA_BASE + 0x20U)     /* Alternate function low (pins 0..7) */
 #define GPIOA_AFRH vol(GPIOA_BASE + 0x24U)     /* Alternate function high (pins 8..15) */
+#define GPIOA_BSRR vol(GPIOA_BASE + 0x18U)
 
 /* GPIOB registers */
 #define GPIOB_MODER vol(GPIOB_BASE + 0x00U)
