@@ -18,73 +18,17 @@ uint32_t color = 0;               /* PWM compare value (0..2399, max is ARR=2399
 /* Numbers from 0 to 7 select a desired LED color */
 void Color_Selector(uint8_t color)
 {
-    // бит0 → R (CCR1)
+    // бит0 → G (CCR1)
     if (color & 0x01) write_reg(&TIM3_CCR1, 2399);
     else              write_reg(&TIM3_CCR1, 0);
 
-    // бит1 → G (CCR2)
+    // бит1 → B (CCR2)
     if (color & 0x02) write_reg(&TIM3_CCR2, 2399);
     else              write_reg(&TIM3_CCR2, 0);
 
-    // бит2 → B (CCR4)
+    // бит2 → R (CCR4)
     if (color & 0x04) write_reg(&TIM3_CCR4, 2399);
     else              write_reg(&TIM3_CCR4, 0);
-}
-
-
-/**
- * Cycle through LED channels with PWM intensity ramping.
- * Each call increments PWM compare value until it reaches 750,
- * then resets and switches to the next LED channel (TIM3_CCR1 -> CCR2 -> CCR4 -> CCR1).
- * flag bits determine which output is active (RMW pattern on GPIOA PA3 or TIM3).
- */
-void Color_Change()
-{
-    /* Channel 0: control TIM3_CCR1 (LED1) when bit0 is set */
-    if (flag >> 0 & 0x01)
-    {
-        if (color >= 750)
-        {
-            color = 0;
-            flag = 0b00000010;  /* Rotate to channel 1 (CCR2) */
-        }
-        write_reg(&TIM3_CCR1, color);
-    }
-
-    /* Channel 1: control TIM3_CCR2 (LED2) when bit1 is set */
-    if (flag >> 1 & 0x01)
-    {
-        if (color >= 750)
-        {
-            color = 0;
-            flag = 0b00000100;  /* Rotate to channel 2 (CCR4) */
-        }
-        write_reg(&TIM3_CCR2, color);
-    }
-
-    /* Channel 2: control TIM3_CCR4 (LED3) when bit2 is set */
-    if (flag >> 2 & 0x01)
-    {
-        if (color >= 750)
-        {
-            color = 0;
-            flag = 0b00000001;  /* Rotate back to channel 0 (CCR1) */
-        }
-        write_reg(&TIM3_CCR4, color);
-    }
-}
-
-/**
- * Increment color value at a controlled pace (simple pacing delay).
- * Returns the updated value for application use.
- * col - pointer to color value variable to increment
- */
-uint32_t Next_Color(uint32_t* col)
-{
-    raw_delay(500);
-    (*col)++;
-
-    return (*col);
 }
 
 /**
@@ -123,7 +67,7 @@ int main(void)
      * - 0x03: DLPF_CFG (~41 Hz bandwidth)
      * - 0x00: AFS_SEL (0=±2g, 1=±4g, 2=±8g, 3=±16g)
      */
-    mpu_wom_enable_pp_high(MPU_ADDR, 0xFF, 0x08, 0x03, 0x00);
+    mpu_wom_enable_pp_high(MPU_ADDR, 0xA0, 0x08, 0x03, 0x00);
 
     flag = 0b00000001;
 
@@ -136,6 +80,8 @@ int main(void)
             exti0_flag = 0;
 
             write_reg(&GPIOA_BSRR, 0x01 << 3);
+            flag = 0b00000000;
+            Color_Selector(0x04);
 
             usart1_puts("PA0 (MPU INT) detected!\r\n");
         }
@@ -150,7 +96,7 @@ int main(void)
             usart1_puts("PA2 (FCU INT) detected!\r\n");
         }
 
-        if (LED_Timer) 
+        if (LED_Timer && flag == 0b00000001) 
         {
             LED_Timer = 0;
             Color_Selector(color);
