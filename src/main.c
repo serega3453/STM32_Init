@@ -67,6 +67,7 @@ int main(void)
      * - 0x03: DLPF_CFG (~41 Hz bandwidth)
      * - 0x00: AFS_SEL (0=±2g, 1=±4g, 2=±8g, 3=±16g)
      */
+    mpu_preconfigure(MPU_ADDR, 0x00, 0x03);
     mpu_wom_enable_pp_high(MPU_ADDR, 0xA0, 0x08, 0x03, 0x00);
 
     flag = 0b00000001;
@@ -100,6 +101,8 @@ int main(void)
         {
             LED_Timer = 0;
             Color_Selector(color);
+            /* Read and print accelerometer axes via UART using existing helper */
+            MPU_ReadAccelRaw(MPU_ADDR, (uint8_t*)0);
             color = color + 1;
         }
     }

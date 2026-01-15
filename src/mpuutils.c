@@ -42,94 +42,142 @@ void MPU_ReadAccelRaw(uint8_t dev7, uint8_t* buf)
  */
 void mpu_wom_enable_pp_high(uint8_t dev7, uint8_t thr, uint8_t lp_odr, uint8_t dlpf_cfg, uint8_t afs_sel)
 {
-    uint8_t d;
-    usart1_puts("MPU diag: start mpu_wom_enable_pp_high()\r\n");
-    usart1_puts("MPU diag: step 0 - soft reset (write PWR_MGMT_1=0x80)\r\n");
-    /* 0) Soft reset MPU6050 to clear any leftover state (INT flags, etc.) */
-    I2C1_WriteByte(dev7, 0x6B, 0x80);   // PWR_MGMT_1: DEVICE_RESET=1
-    usart1_puts("MPU diag: step 0 - write returned\r\n");
-    raw_delay(100000);                  // Wait ~15 ms for reset to complete
-    
-    usart1_puts("MPU diag: step 1 - wake up device (clear sleep)\r\n");
-    // 1) Wake up, keep only accelerometer enabled
-    I2C1_WriteByte(dev7, 0x6B, 0x00);   // PWR_MGMT_1: SLEEP=0, CYCLE=0
-    usart1_puts("MPU diag: step 1 - write PWR_MGMT_1=0x00 returned\r\n");
-    usart1_puts("MPU diag: step 1.1 - disable gyros (PWR_MGMT_2=0x07)\r\n");
-    I2C1_WriteByte(dev7, 0x6C, 0x07);   // PWR_MGMT_2: GyroXYZ off, Accel on
-    usart1_puts("MPU diag: step 1.1 - write returned\r\n");
-
-    usart1_puts("MPU diag: step 1.5 - set AFS_SEL (ACCEL_CONFIG)\r\n");
-    /* 1.5) Set accelerometer full-scale range (AFS_SEL) */
-    afs_sel &= 0x03;
-    I2C1_WriteByte(dev7, 0x1C, (uint8_t)(afs_sel << 3)); /* ACCEL_CONFIG: AFS_SEL bits */
-    usart1_puts("MPU diag: step 1.5 - write returned\r\n");
-    g_afs_sel = afs_sel;
-
-    usart1_puts("MPU diag: step 2 - wait for accel stabilization (~50ms)\r\n");
-    // 2) Wait for accelerometer to stabilize (~40–50 ms at 8 MHz)
-    raw_delay(300000);  // ~40–50 ms at 8 MHz
-    usart1_puts("MPU diag: step 2 - wait done\r\n");
-
-    usart1_puts("MPU diag: step 3 - set ACCEL_CONFIG2 (DLPF_CFG)\r\n");
-    // 3) Set accelerometer DLPF (bandwidth)
-    I2C1_WriteByte(dev7, 0x1D, dlpf_cfg);   // ACCEL_CONFIG2: DLPF_CFG
-    usart1_puts("MPU diag: step 3 - write returned\r\n");
-
-    usart1_puts("MPU diag: step 4 - enable MOT_DETECT_CTRL (WOM)\r\n");
-    // 4) Enable WOM logic and per-axis comparison
-    I2C1_WriteByte(dev7, 0x69, 0xC0);   // MOT_DETECT_CTRL
-    usart1_puts("MPU diag: step 4 - write returned\r\n");
-
-    usart1_puts("MPU diag: step 5 - set WOM_THR and LP_ACCEL_ODR\r\n");
-    // 5) Set WOM threshold (delta accel) and low-power ODR
-    I2C1_WriteByte(dev7, 0x1F, thr);    // WOM_THR
-    usart1_puts("MPU diag: step 5 - WOM_THR write returned\r\n");
-    I2C1_WriteByte(dev7, 0x1E, lp_odr); // LP_ACCEL_ODR
-    usart1_puts("MPU diag: step 5 - LP_ACCEL_ODR write returned\r\n");
-
-    /*
-     * 6) Configure INT pin behaviour. To avoid a spurious latched INT while
-     * configuring the device, temporarily configure INT without latch enabled
-     * then clear any pending status. After the low-power reference period we
-     * set the desired latch/polarity and enable the Motion INT.
+    /* Clean, robust WOM implementation that raises INT high on real impact.
+     * Strategy:
+     *  - Soft-reset and wake device
+     *  - Configure accel range, DLPF and LP ODR
+     *  - Enable MOT_DETECT_CTRL (per-axis compare)
+     *  - Temporarily configure INT as non-latching and clear status
+     *  - Enter cycle mode to let WOM form reference
+     *  - Sample a small number of cycle-mode accel readings to estimate noise
+     *  - Choose WOM_THR (use user thr if non-zero, otherwise derived from noise)
+     *  - Program WOM_THR, enable latched INT and Motion INT
+     *  - If INT_STATUS is immediately set, increase threshold and retry a few times
      */
-    usart1_puts("MPU diag: step 6 - INT_PIN_CFG temporary (no latch)\r\n");
-    /* Temporary INT config: active-high, push-pull, no latch */
-    I2C1_WriteByte(dev7, 0x37, 0x10);   // INT_PIN_CFG (temporary)
-    usart1_puts("MPU diag: step 6 - write returned\r\n");
+    uint8_t d = 0;
+    usart1_puts("WOM: start\r\n");
 
-    usart1_puts("MPU diag: step 7 - read INT_STATUS to clear pending\r\n");
-    /* 7) Clear any pending status immediately to avoid a spurious INT */
-    I2C1_ReadN(dev7, 0x3A, &d, 1);      // INT_STATUS (clears pending)
-    usart1_puts("MPU diag: step 7 - INT_STATUS="); usart1_put_hex8(d); usart1_puts("\r\n");
+    /* soft reset */
+    I2C1_WriteByte(dev7, 0x6B, 0x80);
+    raw_delay(150000);
 
-    usart1_puts("MPU diag: step 8 - enter low-power cycle mode (PWR_MGMT_1=CYCLE=1)\r\n");
-    /* 8) Enter low-power cycle mode (enable WOM but keep INT disabled for now) */
-    I2C1_WriteByte(dev7, 0x6B, 0x20);   // PWR_MGMT_1: CYCLE=1
-    usart1_puts("MPU diag: step 8 - write returned\r\n");
+    /* wake */
+    I2C1_WriteByte(dev7, 0x6B, 0x00);
+    raw_delay(20000);
+    I2C1_WriteByte(dev7, 0x6C, 0x07); /* disable gyros */
 
-    usart1_puts("MPU diag: step 9 - wait for WOM reference (~60ms)\r\n");
-    /* 9) Pause while WOM establishes reference acceleration (~60 ms) */
-    raw_delay(500000);  // ~60 ms, can be slightly longer
-    usart1_puts("MPU diag: step 9 - wait done\r\n");
+    /* set accel FS and DLPF */
+    afs_sel &= 0x03;
+    I2C1_WriteByte(dev7, 0x1C, (uint8_t)(afs_sel << 3));
+    g_afs_sel = afs_sel;
+    I2C1_WriteByte(dev7, 0x1D, dlpf_cfg);
 
-    usart1_puts("MPU diag: step 10 - read INT_STATUS after reference\r\n");
-    /* 10) Clear status again after reference established */
+    /* program LP_ACCEL_ODR (used in cycle mode) */
+    I2C1_WriteByte(dev7, 0x1E, lp_odr);
+
+    /* enable WOM per-axis compare */
+    I2C1_WriteByte(dev7, 0x69, 0xC0);
+
+    /* temporarily set INT non-latching so reads clear any spurious line */
+    I2C1_WriteByte(dev7, 0x37, 0x10);
+    raw_delay(5000);
+
+    /* clear any pending INT */
     I2C1_ReadN(dev7, 0x3A, &d, 1);
-    usart1_puts("MPU diag: step 10 - INT_STATUS="); usart1_put_hex8(d); usart1_puts("\r\n");
+    usart1_puts("WOM: pre-ref INT_STATUS=0x"); usart1_put_hex8(d); usart1_puts("\r\n");
 
-    usart1_puts("MPU diag: step 11 - set INT_PIN_CFG final (latch)\r\n");
-    /* 11) Now program final INT_PIN behaviour (active-high, push-pull, latch) */
-    I2C1_WriteByte(dev7, 0x37, 0x30);   // INT_PIN_CFG (final)
-    usart1_puts("MPU diag: step 11 - write returned\r\n");
+    /* enter cycle mode so WOM reference can form */
+    I2C1_WriteByte(dev7, 0x6B, 0x20); /* CYCLE=1 */
+    raw_delay(50000);
+    raw_delay(500000); /* ~60 ms for reference */
 
-    usart1_puts("MPU diag: step 12 - enable Motion INT (INT_ENABLE bit6)\r\n");
-    /* 12) Finally enable Motion INT (bit 6) */
-    I2C1_WriteByte(dev7, 0x38, 0x40);   // INT_ENABLE (bit6)
-    usart1_puts("MPU diag: step 12 - write returned\r\n");
+    /* sample small number of cycle-mode accel readings to estimate noise */
+    {
+        const uint8_t M = 12;
+        int32_t sx = 0, sy = 0, sz = 0;
+        int16_t sx_samples[M];
+        int16_t sy_samples[M];
+        int16_t sz_samples[M];
+        uint8_t buf[6];
+        for (uint8_t i = 0; i < M; i++) {
+            I2C1_ReadN(dev7, 0x3B, buf, 6);
+            int16_t rx = (int16_t)((buf[0] << 8) | buf[1]);
+            int16_t ry = (int16_t)((buf[2] << 8) | buf[3]);
+            int16_t rz = (int16_t)((buf[4] << 8) | buf[5]);
+            sx_samples[i] = rx; sy_samples[i] = ry; sz_samples[i] = rz;
+            sx += rx; sy += ry; sz += rz;
+            raw_delay(20000);
+        }
+        int16_t mx = (int16_t)(sx / M);
+        int16_t my = (int16_t)(sy / M);
+        int16_t mz = (int16_t)(sz / M);
 
-    usart1_puts("MPU diag: finished mpu_wom_enable_pp_high()\r\n");
-    usart1_puts("MPU6050 WOM enabled\r\n");
+        /* mean absolute deviation per axis */
+        int32_t axdev = 0, aydev = 0, azdev = 0;
+        for (uint8_t i = 0; i < M; i++) {
+            int32_t v;
+            v = sx_samples[i] - mx; if (v < 0) v = -v; axdev += v;
+            v = sy_samples[i] - my; if (v < 0) v = -v; aydev += v;
+            v = sz_samples[i] - mz; if (v < 0) v = -v; azdev += v;
+        }
+        int32_t axr = axdev / M;
+        int32_t ayr = aydev / M;
+        int32_t azr = azdev / M;
+        int32_t noise = axr; if (ayr > noise) noise = ayr; if (azr > noise) noise = azr;
+
+        usart1_puts("WOM: cycle MAD AX="); usart1_put_i16((int16_t)axr); usart1_puts(" AY="); usart1_put_i16((int16_t)ayr); usart1_puts(" AZ="); usart1_put_i16((int16_t)azr); usart1_puts("\r\n");
+
+        /* choose threshold: use user-supplied if non-zero, otherwise noise * factor */
+        uint8_t chosen = 0;
+        if (thr != 0) {
+            chosen = thr;
+        } else {
+            int32_t calc = noise * 3; /* safety factor */
+            if (calc < 8) calc = 8;
+            if (calc > 0xFF) calc = 0xFF;
+            chosen = (uint8_t)calc;
+        }
+
+        usart1_puts("WOM: chosen WOM_THR=0x"); usart1_put_hex8(chosen); usart1_puts("\r\n");
+
+        /* program threshold and enable INT (with retries if INT_STATUS is already set) */
+        uint8_t attempts = 0;
+        for (attempts = 0; attempts < 4; attempts++) {
+            I2C1_WriteByte(dev7, 0x1F, chosen); /* WOM_THR */
+            raw_delay(5000);
+
+            /* enable latched INT now that threshold is programmed */
+            I2C1_WriteByte(dev7, 0x37, 0x30); /* latch, active-high */
+            raw_delay(2000);
+
+            I2C1_WriteByte(dev7, 0x38, 0x40); /* INT_ENABLE bit6 (Motion) */
+            raw_delay(5000);
+
+            I2C1_ReadN(dev7, 0x3A, &d, 1);
+            usart1_puts("WOM: INT_STATUS after enable=0x"); usart1_put_hex8(d); usart1_puts("\r\n");
+            if (d == 0) {
+                usart1_puts("WOM: enabled OK\r\n");
+                break;
+            }
+
+            /* if INT stuck, increase threshold and retry */
+            usart1_puts("WOM: INT stuck, increasing threshold\r\n");
+            uint16_t nt = chosen;
+            nt = nt + (nt / 2); /* increase by 1.5x */
+            if (nt > 0xFF) nt = 0xFF;
+            if ((uint8_t)nt == chosen) break;
+            chosen = (uint8_t)nt;
+            /* temporarily disable latch so we can clear and retry cleanly */
+            I2C1_WriteByte(dev7, 0x37, 0x10);
+            raw_delay(2000);
+            I2C1_ReadN(dev7, 0x3A, &d, 1);
+            raw_delay(2000);
+        }
+
+        if (attempts >= 4) usart1_puts("WOM: warning - INT_STATUS remained set after retries\r\n");
+    }
+
+    usart1_puts("WOM: done\r\n");
 }
 
 /**
@@ -158,4 +206,70 @@ void clear_mpu_int(void)
 {
     uint8_t d;
     I2C1_ReadN(MPU_ADDR, 0x3A, &d, 1);      // INT_STATUS (clears pending)
+}
+
+int mpu_preconfigure(uint8_t dev7, uint8_t afs_sel, uint8_t dlpf_cfg)
+{
+    uint8_t who;
+    uint8_t tmp;
+
+    usart1_puts("MPU preconfig: start\r\n");
+
+    /* soft reset */
+    usart1_puts("MPU preconfig: soft reset (PWR_MGMT_1=0x80)\r\n");
+    I2C1_WriteByte(dev7, 0x6B, 0x80);
+    raw_delay(150000);
+
+    /* read WHO_AM_I */
+    usart1_puts("MPU preconfig: read WHO_AM_I\r\n");
+    I2C1_ReadN(dev7, 0x75, &who, 1);
+    usart1_puts("MPU preconfig: WHO_AM_I=0x"); usart1_put_hex8(who); usart1_puts("\r\n");
+    if (who == 0x00) {
+        usart1_puts("MPU preconfig: WHO_AM_I==0x00 -> device not responding\r\n");
+        return 0;
+    }
+
+    /* wake up */
+    usart1_puts("MPU preconfig: wake up (PWR_MGMT_1=0x00)\r\n");
+    I2C1_WriteByte(dev7, 0x6B, 0x00);
+    usart1_puts("MPU preconfig: set PWR_MGMT_2 (disable gyros)\r\n");
+    I2C1_WriteByte(dev7, 0x6C, 0x07);
+
+    /* Configure as requested by user:
+     * - Enable accelerometers (AFS_SEL=0 -> ±2g, maximum resolution)
+     * - Disable gyros (already set PWR_MGMT_2=0x07)
+     * - Set ACCEL_CONFIG2 DLPF=0 for maximum sample rate / bandwidth
+     * - Set LP_ACCEL_ODR=0 (max)
+     * - Disable WOM/Motion detect here (we'll not configure WOM)
+     * - Configure INT to be DATA_READY-driven (INT_ENABLE bit0)
+     */
+    usart1_puts("MPU preconfig: set ACCEL_CONFIG AFS_SEL=0 (±2g, max res)\r\n");
+    I2C1_WriteByte(dev7, 0x1C, 0x00); /* AFS_SEL=0 */
+    g_afs_sel = 0;
+
+    usart1_puts("MPU preconfig: set ACCEL_CONFIG2 DLPF=0 (max rate)\r\n");
+    I2C1_WriteByte(dev7, 0x1D, 0x00); /* DLPF_CFG=0 */
+
+    usart1_puts("MPU preconfig: set LP_ACCEL_ODR=0 (max)\r\n");
+    I2C1_WriteByte(dev7, 0x1E, 0x00);
+
+    /* Ensure WOM/Motion detect disabled */
+    I2C1_WriteByte(dev7, 0x69, 0x00); /* MOT_DETECT_CTRL = 0 */
+    I2C1_WriteByte(dev7, 0x1F, 0x00); /* WOM_THR = 0 */
+
+    /* read back registers for confirmation */
+    I2C1_ReadN(dev7, 0x1C, &tmp, 1);
+    usart1_puts("MPU preconfig: ACCEL_CONFIG=0x"); usart1_put_hex8(tmp); usart1_puts("\r\n");
+    I2C1_ReadN(dev7, 0x1D, &tmp, 1);
+    usart1_puts("MPU preconfig: ACCEL_CONFIG2=0x"); usart1_put_hex8(tmp); usart1_puts("\r\n");
+
+    /* Configure INT pin and enable DATA_READY interrupt only */
+    I2C1_WriteByte(dev7, 0x37, 0x10); /* INT_PIN_CFG: non-latch, active-high, push-pull */
+    I2C1_WriteByte(dev7, 0x38, 0x01); /* INT_ENABLE: DATA_READY (bit0) */
+    raw_delay(5000);
+    I2C1_ReadN(dev7, 0x3A, &tmp, 1);  /* clear any pending INT_STATUS */
+    usart1_puts("MPU preconfig: INT cleared, INT_ENABLE=0x01 (DATA_READY)\r\n");
+
+    usart1_puts("MPU preconfig: done\r\n");
+    return 1;
 }

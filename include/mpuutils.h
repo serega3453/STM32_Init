@@ -26,6 +26,11 @@ void MPU_ReadAccelRaw(uint8_t dev7, uint8_t* buf);
  */
 void mpu_wom_enable_pp_high(uint8_t dev7, uint8_t thr, uint8_t lp_odr, uint8_t dlpf_cfg, uint8_t afs_sel);
 
+/* Preliminary MPU configuration: soft-reset, wake, set accel FS and DLPF.
+ * Returns 1 on success (device responded and registers written), 0 on failure.
+ */
+int mpu_preconfigure(uint8_t dev7, uint8_t afs_sel, uint8_t dlpf_cfg);
+
 /**
  * Convert raw accelerometer value to hundredths of g (g*100).
  * Automatically uses the current full-scale setting (set by mpu_wom_enable_pp_high).
