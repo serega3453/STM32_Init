@@ -68,7 +68,6 @@ int main(void)
      * - 0x00: AFS_SEL (0=±2g, 1=±4g, 2=±8g, 3=±16g)
      */
     mpu_preconfigure(MPU_ADDR, 0x00, 0x03);
-    mpu_wom_enable_pp_high(MPU_ADDR, 0xA0, 0x08, 0x03, 0x00);
 
     flag = 0b00000001;
 
