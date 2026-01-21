@@ -31,156 +31,6 @@ void MPU_ReadAccelRaw(uint8_t dev7, uint8_t* buf)
 }
 
 /**
- * Enable MPU6050 WOM (Wake-On-Motion) with configurable DLPF.
- * dev7     - 7-bit I2C address
- * thr      - WOM threshold (0x00-0xFF, higher = less sensitive)
- * lp_odr   - Low-power ODR (0x00-0x0F, lower = more power saving)
- * dlpf_cfg - DLPF config (0x00-0x07, higher = more filtering)
- *            0x01: 184 Hz (original)
- *            0x06: 5 Hz (strong filtering)
- *            0x07: Hold (maximum filtering)
- */
-void mpu_wom_enable_pp_high(uint8_t dev7, uint8_t thr, uint8_t lp_odr, uint8_t dlpf_cfg, uint8_t afs_sel)
-{
-    /* Clean, robust WOM implementation that raises INT high on real impact.
-     * Strategy:
-     *  - Soft-reset and wake device
-     *  - Configure accel range, DLPF and LP ODR
-     *  - Enable MOT_DETECT_CTRL (per-axis compare)
-     *  - Temporarily configure INT as non-latching and clear status
-     *  - Enter cycle mode to let WOM form reference
-     *  - Sample a small number of cycle-mode accel readings to estimate noise
-     *  - Choose WOM_THR (use user thr if non-zero, otherwise derived from noise)
-     *  - Program WOM_THR, enable latched INT and Motion INT
-     *  - If INT_STATUS is immediately set, increase threshold and retry a few times
-     */
-    uint8_t d = 0;
-    usart1_puts("WOM: start\r\n");
-
-    /* soft reset */
-    I2C1_WriteByte(dev7, 0x6B, 0x80);
-    raw_delay(150000);
-
-    /* wake */
-    I2C1_WriteByte(dev7, 0x6B, 0x00);
-    raw_delay(20000);
-    I2C1_WriteByte(dev7, 0x6C, 0x07); /* disable gyros */
-
-    /* set accel FS and DLPF */
-    afs_sel &= 0x03;
-    I2C1_WriteByte(dev7, 0x1C, (uint8_t)(afs_sel << 3));
-    g_afs_sel = afs_sel;
-    I2C1_WriteByte(dev7, 0x1D, dlpf_cfg);
-
-    /* program LP_ACCEL_ODR (used in cycle mode) */
-    I2C1_WriteByte(dev7, 0x1E, lp_odr);
-
-    /* enable WOM per-axis compare */
-    I2C1_WriteByte(dev7, 0x69, 0xC0);
-
-    /* temporarily set INT non-latching so reads clear any spurious line */
-    I2C1_WriteByte(dev7, 0x37, 0x10);
-    raw_delay(5000);
-
-    /* clear any pending INT */
-    I2C1_ReadN(dev7, 0x3A, &d, 1);
-    usart1_puts("WOM: pre-ref INT_STATUS=0x"); usart1_put_hex8(d); usart1_puts("\r\n");
-
-    /* enter cycle mode so WOM reference can form */
-    I2C1_WriteByte(dev7, 0x6B, 0x20); /* CYCLE=1 */
-    raw_delay(50000);
-    raw_delay(500000); /* ~60 ms for reference */
-
-    /* sample small number of cycle-mode accel readings to estimate noise */
-    {
-        const uint8_t M = 12;
-        int32_t sx = 0, sy = 0, sz = 0;
-        int16_t sx_samples[M];
-        int16_t sy_samples[M];
-        int16_t sz_samples[M];
-        uint8_t buf[6];
-        for (uint8_t i = 0; i < M; i++) {
-            I2C1_ReadN(dev7, 0x3B, buf, 6);
-            int16_t rx = (int16_t)((buf[0] << 8) | buf[1]);
-            int16_t ry = (int16_t)((buf[2] << 8) | buf[3]);
-            int16_t rz = (int16_t)((buf[4] << 8) | buf[5]);
-            sx_samples[i] = rx; sy_samples[i] = ry; sz_samples[i] = rz;
-            sx += rx; sy += ry; sz += rz;
-            raw_delay(20000);
-        }
-        int16_t mx = (int16_t)(sx / M);
-        int16_t my = (int16_t)(sy / M);
-        int16_t mz = (int16_t)(sz / M);
-
-        /* mean absolute deviation per axis */
-        int32_t axdev = 0, aydev = 0, azdev = 0;
-        for (uint8_t i = 0; i < M; i++) {
-            int32_t v;
-            v = sx_samples[i] - mx; if (v < 0) v = -v; axdev += v;
-            v = sy_samples[i] - my; if (v < 0) v = -v; aydev += v;
-            v = sz_samples[i] - mz; if (v < 0) v = -v; azdev += v;
-        }
-        int32_t axr = axdev / M;
-        int32_t ayr = aydev / M;
-        int32_t azr = azdev / M;
-        int32_t noise = axr; if (ayr > noise) noise = ayr; if (azr > noise) noise = azr;
-
-        usart1_puts("WOM: cycle MAD AX="); usart1_put_i16((int16_t)axr); usart1_puts(" AY="); usart1_put_i16((int16_t)ayr); usart1_puts(" AZ="); usart1_put_i16((int16_t)azr); usart1_puts("\r\n");
-
-        /* choose threshold: use user-supplied if non-zero, otherwise noise * factor */
-        uint8_t chosen = 0;
-        if (thr != 0) {
-            chosen = thr;
-        } else {
-            int32_t calc = noise * 3; /* safety factor */
-            if (calc < 8) calc = 8;
-            if (calc > 0xFF) calc = 0xFF;
-            chosen = (uint8_t)calc;
-        }
-
-        usart1_puts("WOM: chosen WOM_THR=0x"); usart1_put_hex8(chosen); usart1_puts("\r\n");
-
-        /* program threshold and enable INT (with retries if INT_STATUS is already set) */
-        uint8_t attempts = 0;
-        for (attempts = 0; attempts < 4; attempts++) {
-            I2C1_WriteByte(dev7, 0x1F, chosen); /* WOM_THR */
-            raw_delay(5000);
-
-            /* enable latched INT now that threshold is programmed */
-            I2C1_WriteByte(dev7, 0x37, 0x30); /* latch, active-high */
-            raw_delay(2000);
-
-            I2C1_WriteByte(dev7, 0x38, 0x40); /* INT_ENABLE bit6 (Motion) */
-            raw_delay(5000);
-
-            I2C1_ReadN(dev7, 0x3A, &d, 1);
-            usart1_puts("WOM: INT_STATUS after enable=0x"); usart1_put_hex8(d); usart1_puts("\r\n");
-            if (d == 0) {
-                usart1_puts("WOM: enabled OK\r\n");
-                break;
-            }
-
-            /* if INT stuck, increase threshold and retry */
-            usart1_puts("WOM: INT stuck, increasing threshold\r\n");
-            uint16_t nt = chosen;
-            nt = nt + (nt / 2); /* increase by 1.5x */
-            if (nt > 0xFF) nt = 0xFF;
-            if ((uint8_t)nt == chosen) break;
-            chosen = (uint8_t)nt;
-            /* temporarily disable latch so we can clear and retry cleanly */
-            I2C1_WriteByte(dev7, 0x37, 0x10);
-            raw_delay(2000);
-            I2C1_ReadN(dev7, 0x3A, &d, 1);
-            raw_delay(2000);
-        }
-
-        if (attempts >= 4) usart1_puts("WOM: warning - INT_STATUS remained set after retries\r\n");
-    }
-
-    usart1_puts("WOM: done\r\n");
-}
-
-/**
  * Read accelerometer values in hundredths of g.
  * Assumes full-scale ±2g (LSB = 16384 per g).
  */
@@ -272,4 +122,39 @@ int mpu_preconfigure(uint8_t dev7, uint8_t afs_sel, uint8_t dlpf_cfg)
 
     usart1_puts("MPU preconfig: done\r\n");
     return 1;
+}
+
+int mpu_detect_impact(uint8_t dev7, uint16_t sensitivity)
+{
+    static int16_t prev_ax = 0, prev_ay = 0, prev_az = 0;
+    static uint8_t initialized = 0;
+    uint8_t buf[6];
+    int16_t ax, ay, az;
+
+    /* Read raw accel registers */
+    I2C1_ReadN(dev7, 0x3B, buf, 6);
+    ax = (int16_t)((buf[0] << 8) | buf[1]);
+    ay = (int16_t)((buf[2] << 8) | buf[3]);
+    az = (int16_t)((buf[4] << 8) | buf[5]);
+
+    if (!initialized) {
+        prev_ax = ax; prev_ay = ay; prev_az = az;
+        initialized = 1;
+        return 0; /* No previous sample to compare with */
+    }
+
+    int32_t dx = (int32_t)ax - (int32_t)prev_ax;
+    int32_t dy = (int32_t)ay - (int32_t)prev_ay;
+    int32_t dz = (int32_t)az - (int32_t)prev_az;
+
+    int64_t mag2 = (int64_t)dx * dx + (int64_t)dy * dy + (int64_t)dz * dz;
+    int64_t thr = (int64_t)sensitivity * (int64_t)sensitivity;
+
+    /* update previous sample for next call */
+    prev_ax = ax; prev_ay = ay; prev_az = az;
+
+    if (mag2 > thr) {
+        return 1;
+    }
+    return 0;
 }

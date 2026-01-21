@@ -48,3 +48,10 @@ int16_t ax_g100(int16_t raw);
 void print_accel_g100(int16_t ax, int16_t ay, int16_t az);
 
 void clear_mpu_int(void);
+
+/* Detect an impact by comparing current accel reading with previous one.
+ * dev7 - 7-bit I2C address
+ * sensitivity - threshold in raw LSB units; larger = less sensitive
+ * Returns 1 if an impact is detected (delta magnitude > sensitivity), 0 otherwise.
+ */
+int mpu_detect_impact(uint8_t dev7, uint16_t sensitivity);
