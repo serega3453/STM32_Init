@@ -68,6 +68,12 @@ void GPIOA_Config()
     write_bits(&GPIOA_OTYPER,  (0x01U << 3), (0x00U << 3));           /* PA3_PP (push-pull) */
     write_bits(&GPIOA_OSPEEDR, (0x03U << 6), (0x03U << 6));           /* PA3_HS (high-speed) */
     write_bits(&GPIOA_PUPDR,   (0x03U << 6), (0x00U << 6));           /* PA3_NO_PULL */
+
+    /* PA4 - Safe mode input from FCU */
+    write_bits(&GPIOA_MODER,   (0x03U << 8), (0x00U << 8));           /* PA4_IN */
+    write_bits(&GPIOA_OTYPER,  (0x01U << 4), (0x00U << 4));           /* PA4_PP */
+    write_bits(&GPIOA_OSPEEDR, (0x03U << 8), (0x03U << 8));           /* PA4_HS */
+    write_bits(&GPIOA_PUPDR,   (0x03U << 8), (0x02U << 8));           /* PA4_PD */
 }
 
 /**
