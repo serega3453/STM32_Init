@@ -222,3 +222,19 @@ void EXTI_Config(void)
     /* IRQ #6 for EXTI2_3 */
     *NVIC_ISER0 = (1U << 6);  // Enable IRQ 6 (EXTI2_3_IRQn)
 }
+
+void EXTI_Switch(uint8_t enable)
+{
+    if (enable & 1)
+    {
+        write_bits(&EXTI_IMR, (1U << 0), (1U << 0));               // Enable EXTI0
+        write_bits(&EXTI_IMR, (1U << 1), (1U << 1));               // Enable EXTI1
+        write_bits(&EXTI_IMR, (1U << 2), (1U << 2));               // Enable EXTI2
+    }
+    else
+    {
+        write_bits(&EXTI_IMR, (1U << 0), (0U << 0));               // Disable EXTI0
+        write_bits(&EXTI_IMR, (1U << 1), (0U << 1));               // Disable EXTI1
+        write_bits(&EXTI_IMR, (1U << 2), (0U << 2));               // Disable EXTI2
+    }
+}

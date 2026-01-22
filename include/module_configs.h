@@ -69,4 +69,6 @@ void USART1_Config(void);
  */
 void EXTI_Config(void);
 
+void EXTI_Switch(uint8_t);
+
 #endif

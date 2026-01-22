@@ -27,14 +27,19 @@ void Color_Selector(uint8_t color)
     else              write_reg(&TIM3_CCR4, 0);
 }
 
-void check_safe_mode_pin(void)
+void check_safe_mode(void)
 {
     /* Check PA4 (safe mode pin) state and set/clear safe mode flag (bit 1) */
     if (read_bits(&GPIOA_IDR, (1U << 4)))
     {
         flag |= (1 << 1);   // Set safe mode flag
-    } else {
+        EXTI_Switch(0);   // Enable EXTI2_3 interrupt for FCU INT
+    } 
+
+    else 
+    {
         flag &= ~(1 << 1);  // Clear safe mode flag
+        EXTI_Switch(1);   // Disable EXTI2_3 interrupt for FCU INT
     }
 }
 
@@ -48,7 +53,7 @@ int main(void)
     flag = 0b00000010;    //safe mode enabled, LED cycling off
     color = 0;               /* PWM compare value (0..2399, max is ARR=2399) */
 
-    uint8_t safe_timer_value = 10;
+    uint8_t safe_timer_value = 120;
     uint8_t safe_timer_count = 0;
 
     /* Impact detection sensitivity (raw LSB units). Larger = less sensitive. Tweak as needed. */
@@ -71,7 +76,7 @@ int main(void)
     __asm("CPSIE i");   //Enable global interrupts
 
     Color_Selector(0x01);   //Light solid GREEN LED
-    usart1_puts("Safe mode countdown started\r\n");
+    usart1_puts("SM\r\n");
 
     for(;(flag >> 1) & 1;)
     {
@@ -79,7 +84,7 @@ int main(void)
         {
             Sec_Timer = 0;
             safe_timer_count++;
-            usart1_puts("+1\r\n");
+            usart1_puts(safe_timer_value-safe_timer_count + "\r\n");
 
             if (safe_timer_count >= safe_timer_value)
             {
@@ -89,14 +94,14 @@ int main(void)
     }
 
     Color_Selector(0x05);                           //Light solid YELLOW LED
-    usart1_puts("Safe mode countdown ended\r\n");   //Notice about end of safe mode
+    usart1_puts("SM\r\n");                              //Notice about end of safe mode
     exti0_flag = 0;                                 //Clear any pending MPU INT flag
     exti1_flag = 0;                                 //Clear any pending Contactor INT flag
     exti2_flag = 0;                                 //Clear any pending FCU INT flag
 
     for(;;)
     {
-        check_safe_mode_pin();
+        check_safe_mode();
 
         if ((flag >> 1) & 1)        //Safe mode active
         {
@@ -133,6 +138,11 @@ int main(void)
                 flag &= ~(1 << 0); /* stop LED cycling */
                 Color_Selector(0x04); /* solid red to indicate impact */
                 usart1_puts("PA1 (Contactor INT) detected!\r\n");
+
+                for (;;) 
+                {
+                    __asm("WFI");                   //Stop execution, INIT set
+                }
             }
 
             if (exti2_flag) 
@@ -141,6 +151,11 @@ int main(void)
                 flag &= ~(1 << 0); /* stop LED cycling */
                 Color_Selector(0x04); /* solid red to indicate impact */
                 usart1_puts("PA2 (FCU INT) detected!\r\n");
+
+                for (;;) 
+                {
+                    __asm("WFI");                   //Stop execution, INIT set
+                }
             }
         }
     }
