@@ -6,6 +6,7 @@
 volatile uint8_t exti0_flag = 0;
 volatile uint8_t exti1_flag = 0;
 volatile uint8_t exti2_flag = 0;
+volatile uint8_t exti3_flag = 0;
 
 volatile uint8_t Sec_Timer = 0;
 
@@ -41,12 +42,12 @@ void EXTI2_3_IRQHandler(void)
     uint32_t pr = read_bits(&EXTI_PR, 0x0CU);  /* Check EXTI2 and EXTI3 pending bits */
 
     if (pr & (1U << 2)) {
-        exti2_flag = 1;
+        exti2_flag = 1;  //FCU INT
         write_bits(&EXTI_PR, (1U << 2), (1U << 2));
     }
 
     if (pr & (1U << 3)) {
-        /* EXTI3 not used currently */
+        exti3_flag = 1;  //Reserved for future use
         write_bits(&EXTI_PR, (1U << 3), (1U << 3));
     }
 }

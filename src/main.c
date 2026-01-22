@@ -33,13 +33,13 @@ void check_safe_mode(void)
     if (read_bits(&GPIOA_IDR, (1U << 4)))
     {
         flag |= (1 << 1);   // Set safe mode flag
-        EXTI_Switch(0);   // Enable EXTI2_3 interrupt for FCU INT
+        EXTI_Switch(0);   // Enable EXTI
     } 
 
     else 
     {
         flag &= ~(1 << 1);  // Clear safe mode flag
-        EXTI_Switch(1);   // Disable EXTI2_3 interrupt for FCU INT
+        EXTI_Switch(1);   // Disable EXTI
     }
 }
 
@@ -84,7 +84,13 @@ int main(void)
         {
             Sec_Timer = 0;
             safe_timer_count++;
-            usart1_puts(safe_timer_value-safe_timer_count + "\r\n");
+
+            uint8_t v = safe_timer_value - safe_timer_count;
+
+            usart1_putc("0123456789ABCDEF"[v >> 4]);
+            usart1_putc("0123456789ABCDEF"[v & 0x0F]);
+            usart1_putc('\r');
+            usart1_putc('\n');
 
             if (safe_timer_count >= safe_timer_value)
             {
@@ -94,7 +100,7 @@ int main(void)
     }
 
     Color_Selector(0x05);                           //Light solid YELLOW LED
-    usart1_puts("SM\r\n");                              //Notice about end of safe mode
+    usart1_puts("SM\r\n");                          //Notice about end of safe mode
     exti0_flag = 0;                                 //Clear any pending MPU INT flag
     exti1_flag = 0;                                 //Clear any pending Contactor INT flag
     exti2_flag = 0;                                 //Clear any pending FCU INT flag
@@ -112,7 +118,7 @@ int main(void)
             Color_Selector(0x05);   //Light solid YELLOW LED
         }
 
-        if ((flag >> 1) == 0)     //Normal operation
+        if ((flag >> 1) == 0)       //Normal operation
         {
             if (exti0_flag) 
             {
@@ -123,7 +129,7 @@ int main(void)
                     write_reg(&GPIOA_BSRR, 0x01 << 3);  //Raise the pin (set PA3 or configured output)
                     flag &= ~(1 << 0);                  /* stop LED cycling */
                     Color_Selector(0x04);               //Light solid RED LED
-                    usart1_puts("MPU IMPACT detected! Latching and halting main loop.\r\n");
+                    usart1_puts("INT_MPU\r\n");
                 
                     for (;;) 
                     {
@@ -137,7 +143,7 @@ int main(void)
                 exti1_flag = 0;
                 flag &= ~(1 << 0); /* stop LED cycling */
                 Color_Selector(0x04); /* solid red to indicate impact */
-                usart1_puts("PA1 (Contactor INT) detected!\r\n");
+                usart1_puts("INT_CON\r\n");
 
                 for (;;) 
                 {
@@ -150,7 +156,7 @@ int main(void)
                 exti2_flag = 0;
                 flag &= ~(1 << 0); /* stop LED cycling */
                 Color_Selector(0x04); /* solid red to indicate impact */
-                usart1_puts("PA2 (FCU INT) detected!\r\n");
+                usart1_puts("INT_FCU\r\n");
 
                 for (;;) 
                 {
