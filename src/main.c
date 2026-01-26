@@ -76,7 +76,7 @@ int main(void)
     __asm("CPSIE i");   //Enable global interrupts
 
     Color_Selector(0x01);   //Light solid GREEN LED
-    usart1_puts("SM\r\n");
+    usart1_puts("SM_S\r\n");
 
     for(;(flag >> 1) & 1;)
     {
@@ -100,7 +100,7 @@ int main(void)
     }
 
     Color_Selector(0x05);                           //Light solid YELLOW LED
-    usart1_puts("SM\r\n");                          //Notice about end of safe mode
+    usart1_puts("SM_R\r\n");                          //Notice about end of safe mode
     exti0_flag = 0;                                 //Clear any pending MPU INT flag
     exti1_flag = 0;                                 //Clear any pending Contactor INT flag
     exti2_flag = 0;                                 //Clear any pending FCU INT flag
@@ -112,10 +112,12 @@ int main(void)
         if ((flag >> 1) & 1)        //Safe mode active
         {
             Color_Selector(0x02);   //Light solid BLUE LED
+            usart1_puts("SM_S\r\n");
         }
         else
         {
             Color_Selector(0x05);   //Light solid YELLOW LED
+            usart1_puts("SM_R\r\n");  
         }
 
         if ((flag >> 1) == 0)       //Normal operation
