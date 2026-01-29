@@ -58,7 +58,7 @@ int main(void)
     bit 1 - safe mode timer control
     bit 2 - safe mode FCU signal control
     */
-    flag = 0b00000010;    //safe mode enabled, LED cycling off
+    flag = 0b00000000;    //safe mode enabled, LED cycling off
     color = 0;               /* PWM compare value (0..2399, max is ARR=2399) */
 
     uint8_t safe_timer_value = 120;
@@ -84,10 +84,10 @@ int main(void)
     __asm("CPSIE i");   //Enable global interrupts
 
     Color_Selector(0x01);   //Light solid GREEN LED
-    usart1_puts("SM_S\r\n");
+    usart1_puts("TIM\r\n");
     usart1_puts("INT_NOT\r\n");
 
-    for(;(flag >> 1) & 1;)
+    for(;;)
     {
         if (Sec_Timer)
         {
@@ -96,7 +96,7 @@ int main(void)
 
             uint8_t v = safe_timer_value - safe_timer_count;
 
-            usart1_puts("SM_S\r\n");
+            usart1_puts("TIM\r\n");
             usart1_puts("INT_NOT\r\n");
 
             usart1_putc("0123456789ABCDEF"[v >> 4]);
@@ -106,16 +106,16 @@ int main(void)
 
             if (safe_timer_count >= safe_timer_value)
             {
-                flag &= ~(1<<1); //Reset safe mode flag after *safe_timer_value* seconds
+                break;
             }
         }
     }
 
-    Color_Selector(0x05);                           //Light solid YELLOW LED
-    usart1_puts("SM_R\r\n");                        //Notice about end of safe mode
     exti0_flag = 0;                                 //Clear any pending MPU INT flag
     exti1_flag = 0;                                 //Clear any pending Contactor INT flag
     exti2_flag = 0;                                 //Clear any pending FCU INT flag
+
+    exti4_flag = 1;                                 //Set safe mode flag to trigger check
 
     for(;;)
     {
