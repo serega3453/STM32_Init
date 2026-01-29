@@ -100,7 +100,7 @@ int main(void)
     }
 
     Color_Selector(0x05);                           //Light solid YELLOW LED
-    usart1_puts("SM_R\r\n");                          //Notice about end of safe mode
+    usart1_puts("SM_R\r\n");                        //Notice about end of safe mode
     exti0_flag = 0;                                 //Clear any pending MPU INT flag
     exti1_flag = 0;                                 //Clear any pending Contactor INT flag
     exti2_flag = 0;                                 //Clear any pending FCU INT flag
