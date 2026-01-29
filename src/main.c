@@ -29,17 +29,25 @@ void Color_Selector(uint8_t color)
 
 void check_safe_mode(void)
 {
-    /* Check PA4 (safe mode pin) state and set/clear safe mode flag (bit 1) */
-    if (read_bits(&GPIOA_IDR, (1U << 4)))
+    if (exti4_flag)
     {
-        flag |= (1 << 1);   // Set safe mode flag
-        EXTI_Switch(0);   // Enable EXTI
-    } 
+        if (read_bits(&GPIOA_IDR, (1U << 4)))
+        {
+            flag |= (1 << 1);   // Set safe mode flag
+            EXTI_Switch(0);   // Disable EXTI
 
-    else 
-    {
-        flag &= ~(1 << 1);  // Clear safe mode flag
-        EXTI_Switch(1);   // Disable EXTI
+            Color_Selector(0x02);   //Light solid BLUE LED
+            usart1_puts("SM_S\r\n");
+        }
+        else 
+        {
+            flag &= ~(1 << 1);  // Clear safe mode flag
+            EXTI_Switch(1);   // Enable EXTI
+
+            Color_Selector(0x05);   //Light solid BLUE LED
+            usart1_puts("SM_R\r\n");
+        }
+        exti4_flag = 0;   // Clear safe mode interrupt flag
     }
 }
 
@@ -77,6 +85,7 @@ int main(void)
 
     Color_Selector(0x01);   //Light solid GREEN LED
     usart1_puts("SM_S\r\n");
+    usart1_puts("INT_NOT\r\n");
 
     for(;(flag >> 1) & 1;)
     {
@@ -86,6 +95,9 @@ int main(void)
             safe_timer_count++;
 
             uint8_t v = safe_timer_value - safe_timer_count;
+
+            usart1_puts("SM_S\r\n");
+            usart1_puts("INT_NOT\r\n");
 
             usart1_putc("0123456789ABCDEF"[v >> 4]);
             usart1_putc("0123456789ABCDEF"[v & 0x0F]);
@@ -108,17 +120,6 @@ int main(void)
     for(;;)
     {
         check_safe_mode();
-
-        if ((flag >> 1) & 1)        //Safe mode active
-        {
-            Color_Selector(0x02);   //Light solid BLUE LED
-            usart1_puts("SM_S\r\n");
-        }
-        else
-        {
-            Color_Selector(0x05);   //Light solid YELLOW LED
-            usart1_puts("SM_R\r\n");  
-        }
 
         if ((flag >> 1) == 0)       //Normal operation
         {

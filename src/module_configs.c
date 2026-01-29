@@ -202,16 +202,22 @@ void EXTI_Config(void)
     write_bits(&SYSCFG_EXTICR1, (0x0FU << 0), (0x00U << 0));   // EXTI0 = Port A
     write_bits(&SYSCFG_EXTICR1, (0x0FU << 4), (0x00U << 4));   // EXTI1 = Port A
     write_bits(&SYSCFG_EXTICR1, (0x0FU << 8), (0x00U << 8));   // EXTI2 = Port A
+    /* EXTI3 is unused here; safe-mode input is on PA4 -> map EXTI4 to Port A (SYSCFG_EXTICR2[3:0]) */
+    write_bits(&SYSCFG_EXTICR2, (0x0FU << 0), (0x00U << 0));   // EXTI4 = Port A
 
     /* Step 2: Configure trigger edges (all rising edge) */
     write_bits(&EXTI_RTSR, (1U << 0), (1U << 0));              // EXTI0: rising edge
     write_bits(&EXTI_RTSR, (1U << 1), (1U << 1));              // EXTI1: rising edge
     write_bits(&EXTI_RTSR, (1U << 2), (1U << 2));              // EXTI2: rising edge
+    /* Configure EXTI4 (PA4) to trigger on both edges for safe-mode */
+    write_bits(&EXTI_RTSR, (1U << 4), (1U << 4));              // EXTI4: rising edge
+    write_bits(&EXTI_FTSR, (1U << 4), (1U << 4));              // EXTI4: falling edge
 
     /* Step 3: Enable interrupt requests */
     write_bits(&EXTI_IMR, (1U << 0), (1U << 0));               // Enable EXTI0
     write_bits(&EXTI_IMR, (1U << 1), (1U << 1));               // Enable EXTI1
     write_bits(&EXTI_IMR, (1U << 2), (1U << 2));               // Enable EXTI2
+    write_bits(&EXTI_IMR, (1U << 4), (1U << 4));               // Enable EXTI4 (PA4 safe-mode)
 
     /* Step 4: Enable EXTI0_1_IRQn in NVIC (Nested Vectored Interrupt Controller) */
     /* IRQ #5 for EXTI0_1 */
@@ -221,6 +227,8 @@ void EXTI_Config(void)
     /* Step 5: Enable EXTI2_3_IRQn in NVIC */
     /* IRQ #6 for EXTI2_3 */
     *NVIC_ISER0 = (1U << 6);  // Enable IRQ 6 (EXTI2_3_IRQn)
+    /* Step 6: Enable EXTI4_15_IRQn in NVIC (IRQ #7) to handle EXTI4..EXTI15 */
+    *NVIC_ISER0 = (1U << 7);  // Enable IRQ 7 (EXTI4_15_IRQn)
 }
 
 void EXTI_Switch(uint8_t enable)

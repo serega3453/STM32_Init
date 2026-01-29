@@ -22,6 +22,8 @@
 
 /* SYSCFG + EXTI registers */
 #define SYSCFG_EXTICR1 vol(SYSCFG_BASE + 0x08U)   /* EXTI Config for lines 0..3 */
+/* SYSCFG_EXTICR2 covers EXTI lines 4..7 (offset 0x0C) */
+#define SYSCFG_EXTICR2 vol(SYSCFG_BASE + 0x0CU)   /* EXTI Config for lines 4..7 */
 #define EXTI_IMR vol(EXTI_BASE + 0x00U)            /* Interrupt Mask */
 #define EXTI_EMR vol(EXTI_BASE + 0x04U)            /* Event Mask */
 #define EXTI_RTSR vol(EXTI_BASE + 0x08U)           /* Rising Trigger */

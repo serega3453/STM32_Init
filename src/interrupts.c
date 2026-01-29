@@ -6,7 +6,7 @@
 volatile uint8_t exti0_flag = 0;
 volatile uint8_t exti1_flag = 0;
 volatile uint8_t exti2_flag = 0;
-volatile uint8_t exti3_flag = 0;
+volatile uint8_t exti4_flag = 0;
 
 volatile uint8_t Sec_Timer = 0;
 
@@ -46,8 +46,18 @@ void EXTI2_3_IRQHandler(void)
         write_bits(&EXTI_PR, (1U << 2), (1U << 2));
     }
 
-    if (pr & (1U << 3)) {
-        exti3_flag = 1;  //Reserved for future use
-        write_bits(&EXTI_PR, (1U << 3), (1U << 3));
+    /* EXTI3 is unused in this project (safe-mode moved to PA4/EXTI4) */
+}
+
+/**
+ * EXTI4_15_IRQHandler handles EXTI lines 4..15. We only care about EXTI4 (PA4 safe-mode).
+ */
+void EXTI4_15_IRQHandler(void)
+{
+    uint32_t pr = read_bits(&EXTI_PR, (1U << 4)); /* check pending bit for EXTI4 */
+
+    if (pr & (1U << 4)) {
+        exti4_flag = 1; /* set safe-mode flag (PA4 / EXTI4) */
+        write_bits(&EXTI_PR, (1U << 4), (1U << 4));
     }
 }
