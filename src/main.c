@@ -119,6 +119,7 @@ int main(void)
 
     for(;;)
     {
+        __asm("WFI");   //Wait for interrupt (low power standby)
         check_safe_mode();
 
         if ((flag >> 1) == 0)       //Normal operation
