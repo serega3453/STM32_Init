@@ -74,6 +74,8 @@ void GPIOA_Config()
     write_bits(&GPIOA_OTYPER,  (0x01U << 4), (0x00U << 4));           /* PA4_PP */
     write_bits(&GPIOA_OSPEEDR, (0x03U << 8), (0x03U << 8));           /* PA4_HS */
     write_bits(&GPIOA_PUPDR,   (0x03U << 8), (0x02U << 8));           /* PA4_PD */
+
+    /* PA5 - Hard safe mode input from reed switch */
 }
 
 /**
