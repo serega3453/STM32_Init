@@ -76,6 +76,11 @@ void GPIOA_Config()
     write_bits(&GPIOA_PUPDR,   (0x03U << 8), (0x02U << 8));           /* PA4_PD */
 
     /* PA5 - Hard safe mode input from reed switch */
+    write_bits(&GPIOA_MODER, (0x03U << 10), (0x00U << 10));           /* PA5 IN */
+    write_bits(&GPIOA_OTYPER, (0x01U << 5), (0x00U << 5));            /* PA5_PP */
+    write_bits(&GPIOA_OSPEEDR, (0x03U << 10), (0x03U << 10));         /* PA5_HS */
+    write_bits(&GPIOA_PUPDR, (0x03U << 10), (0x02U << 10));           /* PA5_PD */
+
 }
 
 /**
@@ -201,11 +206,12 @@ void EXTI_Config(void)
 {
     /* Step 1: Connect PA0, PA1, PA2 to EXTI0, EXTI1, EXTI2 lines via SYSCFG */
     /* EXTI0 <- PA0, EXTI1 <- PA1, EXTI2 <- PA2 (port A = 0) */
-    write_bits(&SYSCFG_EXTICR1, (0x0FU << 0), (0x00U << 0));   // EXTI0 = Port A
-    write_bits(&SYSCFG_EXTICR1, (0x0FU << 4), (0x00U << 4));   // EXTI1 = Port A
-    write_bits(&SYSCFG_EXTICR1, (0x0FU << 8), (0x00U << 8));   // EXTI2 = Port A
+    write_bits(&SYSCFG_EXTICR1, (0x0FU << 0), (0x00U << 0));   // EXTI0 = Port A (DATA_RDY)
+    write_bits(&SYSCFG_EXTICR1, (0x0FU << 4), (0x00U << 4));   // EXTI1 = Port A (Contactor INT)
+    write_bits(&SYSCFG_EXTICR1, (0x0FU << 8), (0x00U << 8));   // EXTI2 = Port A (FCU INT)
     /* EXTI3 is unused here; safe-mode input is on PA4 -> map EXTI4 to Port A (SYSCFG_EXTICR2[3:0]) */
-    write_bits(&SYSCFG_EXTICR2, (0x0FU << 0), (0x00U << 0));   // EXTI4 = Port A
+    write_bits(&SYSCFG_EXTICR2, (0x0FU << 0), (0x00U << 0));   // EXTI4 = Port A (safe-mode input)
+    write_bits(&SYSCFG_EXTICR2, (0x0FU << 4), (0x00U << 4));   // EXTI5 = Port A (hard safe-mode input)
 
     /* Step 2: Configure trigger edges (all rising edge) */
     write_bits(&EXTI_RTSR, (1U << 0), (1U << 0));              // EXTI0: rising edge
@@ -214,12 +220,15 @@ void EXTI_Config(void)
     /* Configure EXTI4 (PA4) to trigger on both edges for safe-mode */
     write_bits(&EXTI_RTSR, (1U << 4), (1U << 4));              // EXTI4: rising edge
     write_bits(&EXTI_FTSR, (1U << 4), (1U << 4));              // EXTI4: falling edge
+    write_bits(&EXTI_RTSR, (1U << 5), (1U << 5));              // EXTI5: rising edge
+    write_bits(&EXTI_FTSR, (1U << 5), (1U << 5));              // EXTI5: falling edge
 
     /* Step 3: Enable interrupt requests */
     write_bits(&EXTI_IMR, (1U << 0), (1U << 0));               // Enable EXTI0
     write_bits(&EXTI_IMR, (1U << 1), (1U << 1));               // Enable EXTI1
     write_bits(&EXTI_IMR, (1U << 2), (1U << 2));               // Enable EXTI2
     write_bits(&EXTI_IMR, (1U << 4), (1U << 4));               // Enable EXTI4 (PA4 safe-mode)
+    write_bits(&EXTI_IMR, (1U << 5), (1U << 5));               // Enable EXTI5 (hard safe-mode input)
 
     /* Step 4: Enable EXTI0_1_IRQn in NVIC (Nested Vectored Interrupt Controller) */
     /* IRQ #5 for EXTI0_1 */

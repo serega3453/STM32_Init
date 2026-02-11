@@ -3,10 +3,11 @@
 #include "regutils.h"
 
 /* Global interrupt flags */
-volatile uint8_t exti0_flag = 0;
-volatile uint8_t exti1_flag = 0;
-volatile uint8_t exti2_flag = 0;
-volatile uint8_t exti4_flag = 0;
+volatile uint8_t exti0_flag = 0;    //MPU6050 DATA_RDY
+volatile uint8_t exti1_flag = 0;    //Contactor INT
+volatile uint8_t exti2_flag = 0;    //FCU INT
+volatile uint8_t exti4_flag = 0;    //Safe mode input (PA4)
+volatile uint8_t exti5_flag = 1;    //Hard safe mode input (PA5)
 
 volatile uint8_t Sec_Timer = 0;
 
@@ -59,5 +60,19 @@ void EXTI4_15_IRQHandler(void)
     if (pr & (1U << 4)) {
         exti4_flag = 1; /* set safe-mode flag (PA4 / EXTI4) */
         write_bits(&EXTI_PR, (1U << 4), (1U << 4));
+    }
+
+    if (pr & (1U << 5)) {
+
+        write_bits(&EXTI_PR, (1U << 5), (1U << 5)); /* Clear EXTI5 pending bit */
+        
+        if (read_bits(&GPIOA_IDR, (1U << 5))) {
+            write_reg(&SCB_AIRCR, 0x05FA0004U); /* Trigger system reset via SCB AIRCR */
+            while(1);                           /* Wait for reset to occur */
+        } 
+        else 
+        {
+            exti5_flag = 0; /* clear hard safe-mode flag (PA5 / EXTI5) */
+        }
     }
 }

@@ -1606,7 +1606,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "5.6V"
+		(property "Value" "3.3V"
 			(at 110.49 106.6799 90)
 			(effects
 				(font
@@ -1676,7 +1676,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "51k"
+		(property "Value" "20k"
 			(at 123.19 106.6799 0)
 			(effects
 				(font
@@ -1897,7 +1897,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "21k"
+		(property "Value" "10k"
 			(at 99.06 106.6799 0)
 			(effects
 				(font

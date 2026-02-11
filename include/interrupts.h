@@ -8,6 +8,7 @@ extern volatile uint8_t exti0_flag;  /* PA0 (MPU INT) interrupt occurred */
 extern volatile uint8_t exti1_flag;  /* PA1 (Contactor INT) interrupt occurred */
 extern volatile uint8_t exti2_flag;  /* PA2 (FCU INT) interrupt occurred */
 extern volatile uint8_t exti4_flag;  /* PA4 (Safe mode reset) interrupt occurred */
+extern volatile uint8_t exti5_flag;  /* PA5 (Hard safe mode input) interrupt occurred */
 
 extern volatile uint8_t Sec_Timer;  /* TIM14 update interrupt occurred */
 

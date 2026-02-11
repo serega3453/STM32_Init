@@ -55,10 +55,10 @@ int main(void)
 {
     /*
     bit 0 - LED cycling control 
-    bit 1 - safe mode timer control
-    bit 2 - safe mode FCU signal control
+    bit 1 - safe mode control
+    bit 2 - hard safe mode control
     */
-    flag = 0b00000000;    //safe mode enabled, LED cycling off
+    flag = 0b00000000;       //safe mode disabled, LED cycling off
     color = 0;               /* PWM compare value (0..2399, max is ARR=2399) */
 
     uint8_t safe_timer_value = 120;
@@ -83,11 +83,21 @@ int main(void)
 
     __asm("CPSIE i");   //Enable global interrupts
 
-    Color_Selector(0x01);   //Light solid GREEN LED
-    usart1_puts("TIM\r\n");
+    exti5_flag = read_bits(&GPIOA_IDR, (1U << 5));
+
+    Color_Selector(0x00);   //All LEDs off
+    usart1_puts("HS_S\r\n");
     usart1_puts("INT_NOT\r\n");
 
-    for(;;)
+    while(exti5_flag)
+    {
+        __asm("WFI");   //Wait for interrupt (low power standby)
+    }
+
+    usart1_puts("HS_R\r\n");
+    Color_Selector(0x01);   //Light solid GREEN LED
+
+    for(;;)     /*Start loop*/
     {
         if (Sec_Timer)
         {
@@ -117,7 +127,7 @@ int main(void)
 
     exti4_flag = 1;                                 //Set safe mode flag to trigger check
 
-    for(;;)
+    for(;;)     /*Main loop*/
     {
         __asm("WFI");   //Wait for interrupt (low power standby)
         check_safe_mode();

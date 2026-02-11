@@ -19,6 +19,10 @@
 #define USART1_BASE 0x40013800U       /* UART 1 */
 #define SYSCFG_BASE 0x40010000U       /* SYSCFG */
 #define EXTI_BASE 0x40010400U         /* EXTI */
+#define SCB_BASE 0xE000ED00U          /* System Control Block base */
+
+/*SCB registers*/
+#define SCB_AIRCR vol(SCB_BASE + 0x0CU) /* Application Interrupt and Reset Control */
 
 /* SYSCFG + EXTI registers */
 #define SYSCFG_EXTICR1 vol(SYSCFG_BASE + 0x08U)   /* EXTI Config for lines 0..3 */
