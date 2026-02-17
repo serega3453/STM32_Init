@@ -14,15 +14,15 @@ uint32_t color;
 /* Numbers from 0 to 7 select a desired LED color */
 void Color_Selector(uint8_t color)
 {
-    // бит0 → G (CCR1)
+    // бит0 → R (CCR1)
     if (color & 0x01) write_reg(&TIM3_CCR1, 2399);
     else              write_reg(&TIM3_CCR1, 0);
 
-    // бит1 → B (CCR2)
+    // бит1 → G (CCR2)
     if (color & 0x02) write_reg(&TIM3_CCR2, 2399);
     else              write_reg(&TIM3_CCR2, 0);
 
-    // бит2 → R (CCR4)
+    // бит2 → B (CCR4)
     if (color & 0x04) write_reg(&TIM3_CCR4, 2399);
     else              write_reg(&TIM3_CCR4, 0);
 }
@@ -36,7 +36,7 @@ void check_safe_mode(void)
             flag |= (1 << 1);   // Set safe mode flag
             EXTI_Switch(0);   // Disable EXTI
 
-            Color_Selector(0x02);   //Light solid BLUE LED
+            Color_Selector(0x03);   //Light solid YELLOW LED
             usart1_puts("SM_S\r\n");
         }
         else 
@@ -44,7 +44,7 @@ void check_safe_mode(void)
             flag &= ~(1 << 1);  // Clear safe mode flag
             EXTI_Switch(1);   // Enable EXTI
 
-            Color_Selector(0x05);   //Light solid BLUE LED
+            Color_Selector(0x04);   //Light solid BLUE LED
             usart1_puts("SM_R\r\n");
         }
         exti4_flag = 0;   // Clear safe mode interrupt flag
@@ -95,7 +95,7 @@ int main(void)
     }
 
     usart1_puts("HS_R\r\n");
-    Color_Selector(0x01);   //Light solid GREEN LED
+    Color_Selector(0x02);   //Light solid GREEN LED
 
     for(;;)     /*Start loop*/
     {
@@ -142,7 +142,7 @@ int main(void)
                 {
                     write_reg(&GPIOA_BSRR, 0x01 << 3);  //Raise the pin (set PA3 or configured output)
                     flag &= ~(1 << 0);                  /* stop LED cycling */
-                    Color_Selector(0x04);               //Light solid RED LED
+                    Color_Selector(0x01);               //Light solid RED LED
                     usart1_puts("INT_MPU\r\n");
                 
                     for (;;) 
@@ -156,7 +156,7 @@ int main(void)
             {
                 exti1_flag = 0;
                 flag &= ~(1 << 0); /* stop LED cycling */
-                Color_Selector(0x04); /* solid red to indicate impact */
+                Color_Selector(0x01); /* solid red to indicate impact */
                 usart1_puts("INT_CON\r\n");
 
                 for (;;) 
@@ -169,7 +169,7 @@ int main(void)
             {
                 exti2_flag = 0;
                 flag &= ~(1 << 0); /* stop LED cycling */
-                Color_Selector(0x04); /* solid red to indicate impact */
+                Color_Selector(0x01); /* solid red to indicate impact */
                 usart1_puts("INT_FCU\r\n");
 
                 for (;;) 
