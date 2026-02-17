@@ -1942,7 +1942,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Switch:SW_Reed"
+		(symbol "Switch:SW_Reed_SPDT"
 			(pin_numbers
 				(hide yes)
 			)
@@ -1961,8 +1961,8 @@
 					)
 				)
 			)
-			(property "Value" "SW_Reed"
-				(at 0 -2.54 0)
+			(property "Value" "SW_Reed_SPDT"
+				(at 0 -3.81 0)
 				(effects
 					(font
 						(size 1.27 1.27)
@@ -1987,7 +1987,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "reed switch"
+			(property "Description" "SPDT reed switch"
 				(at 0 0 0)
 				(effects
 					(font
@@ -1996,7 +1996,7 @@
 					(hide yes)
 				)
 			)
-			(property "ki_keywords" "reed magnetic switch"
+			(property "ki_keywords" "reed magnetic switch SPDT"
 				(at 0 0 0)
 				(effects
 					(font
@@ -2005,10 +2005,10 @@
 					(hide yes)
 				)
 			)
-			(symbol "SW_Reed_0_0"
+			(symbol "SW_Reed_SPDT_0_0"
 				(polyline
 					(pts
-						(xy -2.54 0) (xy 1.27 0.762)
+						(xy -2.54 0) (xy 1.905 0.508)
 					)
 					(stroke
 						(width 0)
@@ -2066,9 +2066,23 @@
 						(type none)
 					)
 				)
+			)
+			(symbol "SW_Reed_SPDT_0_1"
 				(polyline
 					(pts
-						(xy 2.54 0) (xy -1.27 -0.762)
+						(xy 1.27 0.635) (xy 5.08 0.635) (xy 5.08 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 -0.635) (xy 5.08 -0.635) (xy 5.08 -2.54)
 					)
 					(stroke
 						(width 0)
@@ -2079,9 +2093,27 @@
 					)
 				)
 			)
-			(symbol "SW_Reed_1_1"
+			(symbol "SW_Reed_SPDT_1_1"
 				(pin passive line
 					(at -5.08 0 0)
+					(length 2.54)
+					(name "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 7.62 2.54 180)
 					(length 2.54)
 					(name "1"
 						(effects
@@ -2099,16 +2131,16 @@
 					)
 				)
 				(pin passive line
-					(at 5.08 0 180)
+					(at 7.62 -2.54 180)
 					(length 2.54)
-					(name "2"
+					(name "3"
 						(effects
 							(font
 								(size 1.27 1.27)
 							)
 						)
 					)
-					(number "2"
+					(number "3"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -2525,6 +2557,10 @@
 		(color 0 0 0 0)
 		(uuid "f3927a75-51ce-4d65-8f7d-e1cb33f99006")
 	)
+	(no_connect
+		(at 245.11 133.35)
+		(uuid "cb06d112-5959-4fea-a4e0-180b2c682b71")
+	)
 	(wire
 		(pts
 			(xy 91.44 119.38) (xy 139.7 119.38)
@@ -2534,6 +2570,16 @@
 			(type default)
 		)
 		(uuid "01485d4f-f067-4713-9ee1-1a6fcc61d29d")
+	)
+	(wire
+		(pts
+			(xy 251.46 128.27) (xy 251.46 133.35)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "01aa5c32-6f76-4fbb-86cf-24faa40c8ddd")
 	)
 	(wire
 		(pts
@@ -2637,16 +2683,6 @@
 	)
 	(wire
 		(pts
-			(xy 231.14 132.08) (xy 231.14 133.35)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "219d3e16-10b3-46ec-bfae-8126d582c8f7")
-	)
-	(wire
-		(pts
 			(xy 113.03 163.83) (xy 116.84 163.83)
 		)
 		(stroke
@@ -2697,6 +2733,16 @@
 	)
 	(wire
 		(pts
+			(xy 245.11 128.27) (xy 251.46 128.27)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2d904445-fb8a-44e0-8f7e-9d2b19c7342e")
+	)
+	(wire
+		(pts
 			(xy 91.44 134.62) (xy 142.24 134.62)
 		)
 		(stroke
@@ -2734,16 +2780,6 @@
 			(type default)
 		)
 		(uuid "3600e4f6-db24-4b67-b3b2-f844f21922cb")
-	)
-	(wire
-		(pts
-			(xy 231.14 133.35) (xy 234.95 133.35)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "4340c50e-8c61-40f6-aaf7-8160803943a4")
 	)
 	(wire
 		(pts
@@ -2997,16 +3033,6 @@
 	)
 	(wire
 		(pts
-			(xy 245.11 133.35) (xy 251.46 133.35)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "7ddedcb7-a071-4e4c-9418-3fb5d8044ba4")
-	)
-	(wire
-		(pts
 			(xy 255.27 41.91) (xy 255.27 60.96)
 		)
 		(stroke
@@ -3137,7 +3163,7 @@
 	)
 	(wire
 		(pts
-			(xy 232.41 147.32) (xy 234.95 147.32)
+			(xy 233.68 148.59) (xy 236.22 148.59)
 		)
 		(stroke
 			(width 0)
@@ -3164,6 +3190,16 @@
 			(type default)
 		)
 		(uuid "9c9055d3-3f33-43ab-9c24-37e49dcd1192")
+	)
+	(wire
+		(pts
+			(xy 232.41 130.81) (xy 231.14 130.81)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9dee85a5-2215-4991-b30b-f47c9292c08a")
 	)
 	(wire
 		(pts
@@ -3197,7 +3233,17 @@
 	)
 	(wire
 		(pts
-			(xy 245.11 147.32) (xy 247.65 147.32)
+			(xy 231.14 130.81) (xy 231.14 132.08)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "aceb000e-06fd-42a8-b09b-9ad32d19f32d")
+	)
+	(wire
+		(pts
+			(xy 248.92 146.05) (xy 251.46 146.05)
 		)
 		(stroke
 			(width 0)
@@ -3404,6 +3450,16 @@
 			(type default)
 		)
 		(uuid "e9eb0a8e-14ff-4cfd-8953-aadbba4f8db6")
+	)
+	(wire
+		(pts
+			(xy 248.92 151.13) (xy 251.46 151.13)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "eac05976-45e4-499c-86cf-3d2ab0c37855")
 	)
 	(wire
 		(pts
@@ -3894,6 +3950,73 @@
 		)
 	)
 	(symbol
+		(lib_id "power:+3.3V")
+		(at 251.46 151.13 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "0da01c4e-e950-4a44-aa96-5026dcfac168")
+		(property "Reference" "#PWR059"
+			(at 247.65 151.13 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+3.3V"
+			(at 255.27 151.1299 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 251.46 151.13 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 251.46 151.13 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3.3V\""
+			(at 251.46 151.13 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "cfe30608-6e28-4c99-a201-7074d39ecffc")
+		)
+		(instances
+			(project "prot2"
+				(path "/499cd563-45ec-4003-ae11-cecce2310987"
+					(reference "#PWR059")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:+1V0")
 		(at 30.48 116.84 90)
 		(unit 1)
@@ -4091,74 +4214,6 @@
 			(project "supercap_version2"
 				(path "/499cd563-45ec-4003-ae11-cecce2310987"
 					(reference "R3")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Switch:SW_Reed")
-		(at 240.03 133.35 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "1af4bc9f-f1a0-4561-94e0-ea07304e5d11")
-		(property "Reference" "SW3"
-			(at 240.03 127 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "SW_Reed"
-			(at 240.03 129.54 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 240.03 133.35 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 240.03 133.35 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "reed switch"
-			(at 240.03 133.35 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "d94e06fe-6092-4951-b1e3-bcb2df02eb7c")
-		)
-		(pin "2"
-			(uuid "f4ee0497-ff2d-45e7-b9fb-2277457c6471")
-		)
-		(instances
-			(project "prot2"
-				(path "/499cd563-45ec-4003-ae11-cecce2310987"
-					(reference "SW3")
 					(unit 1)
 				)
 			)
@@ -4499,74 +4554,6 @@
 			(project "supercap_version2"
 				(path "/499cd563-45ec-4003-ae11-cecce2310987"
 					(reference "R6")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Switch:SW_Reed")
-		(at 240.03 147.32 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "230c9e3b-f45e-4c38-9a7a-deec0e0602d0")
-		(property "Reference" "SW2"
-			(at 240.03 140.97 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "SW_Reed"
-			(at 240.03 143.51 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 240.03 147.32 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 240.03 147.32 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "reed switch"
-			(at 240.03 147.32 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "d0ab78e2-3a20-41f6-84cb-9e739942f4aa")
-		)
-		(pin "2"
-			(uuid "67e4f1e4-577d-4132-9823-c59272d765e2")
-		)
-		(instances
-			(project ""
-				(path "/499cd563-45ec-4003-ae11-cecce2310987"
-					(reference "SW2")
 					(unit 1)
 				)
 			)
@@ -6053,6 +6040,77 @@
 		)
 	)
 	(symbol
+		(lib_id "Switch:SW_Reed_SPDT")
+		(at 241.3 148.59 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "6214bba7-e6d0-4ec1-b670-f993acce3d46")
+		(property "Reference" "SW2"
+			(at 242.0015 140.97 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "SW_Reed_SPDT"
+			(at 242.0015 143.51 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 241.3 148.59 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 241.3 148.59 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "SPDT reed switch"
+			(at 241.3 148.59 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "3"
+			(uuid "b00622a2-ac8c-4aea-b38b-cf6a7bc85e39")
+		)
+		(pin "1"
+			(uuid "ca640790-e998-4520-be7f-e5f19bc60287")
+		)
+		(pin "2"
+			(uuid "4764e12c-ac08-49ac-924a-d33bd6a9265f")
+		)
+		(instances
+			(project "prot2"
+				(path "/499cd563-45ec-4003-ae11-cecce2310987"
+					(reference "SW2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Connector_Generic:Conn_01x02")
 		(at 76.2 29.21 90)
 		(unit 1)
@@ -7416,7 +7474,7 @@
 	)
 	(symbol
 		(lib_id "power:+1V0")
-		(at 232.41 147.32 90)
+		(at 233.68 148.59 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -7424,7 +7482,7 @@
 		(dnp no)
 		(uuid "ae8d22a1-7bcb-4a80-9a77-463e4ad88314")
 		(property "Reference" "#PWR056"
-			(at 236.22 147.32 0)
+			(at 237.49 148.59 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7433,7 +7491,7 @@
 			)
 		)
 		(property "Value" "SAFE MODE FCU"
-			(at 228.6 147.3201 90)
+			(at 229.87 148.5901 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7442,7 +7500,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 232.41 147.32 0)
+			(at 233.68 148.59 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7451,7 +7509,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 232.41 147.32 0)
+			(at 233.68 148.59 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7460,7 +7518,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+1V0\""
-			(at 232.41 147.32 0)
+			(at 233.68 148.59 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8621,7 +8679,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 247.65 147.32 90)
+		(at 251.46 146.05 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -8630,7 +8688,7 @@
 		(fields_autoplaced yes)
 		(uuid "e9ed1da7-301f-4630-97e3-b39c2f92f84a")
 		(property "Reference" "#PWR060"
-			(at 254 147.32 0)
+			(at 257.81 146.05 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8639,7 +8697,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 251.46 147.3199 90)
+			(at 255.27 146.0499 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8648,7 +8706,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 247.65 147.32 0)
+			(at 251.46 146.05 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8657,7 +8715,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 247.65 147.32 0)
+			(at 251.46 146.05 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8666,7 +8724,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 247.65 147.32 0)
+			(at 251.46 146.05 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9087,6 +9145,77 @@
 			(project "supercap_version2"
 				(path "/499cd563-45ec-4003-ae11-cecce2310987"
 					(reference "#PWR052")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Switch:SW_Reed_SPDT")
+		(at 237.49 130.81 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "fed1cac5-3075-46a6-b570-367f1cc050b8")
+		(property "Reference" "SW5"
+			(at 238.1915 123.19 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "SW_Reed_SPDT"
+			(at 238.1915 125.73 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 237.49 130.81 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 237.49 130.81 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "SPDT reed switch"
+			(at 237.49 130.81 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "3"
+			(uuid "c3551adb-7fd7-4132-a92e-31c374b4cbb5")
+		)
+		(pin "1"
+			(uuid "aa642075-9146-41e0-819d-107d04f307fa")
+		)
+		(pin "2"
+			(uuid "35d9cdc0-a726-4854-8323-e66307e20f34")
+		)
+		(instances
+			(project ""
+				(path "/499cd563-45ec-4003-ae11-cecce2310987"
+					(reference "SW5")
 					(unit 1)
 				)
 			)

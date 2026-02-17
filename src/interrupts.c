@@ -55,7 +55,7 @@ void EXTI2_3_IRQHandler(void)
  */
 void EXTI4_15_IRQHandler(void)
 {
-    uint32_t pr = read_bits(&EXTI_PR, (1U << 4)); /* check pending bit for EXTI4 */
+    uint32_t pr = read_bits(&EXTI_PR, 0x30U); /* check pending bit for EXTI4 */
 
     if (pr & (1U << 4)) {
         exti4_flag = 1; /* set safe-mode flag (PA4 / EXTI4) */
