@@ -79,7 +79,7 @@ void GPIOA_Config()
     write_bits(&GPIOA_MODER, (0x03U << 10), (0x00U << 10));           /* PA5 IN */
     write_bits(&GPIOA_OTYPER, (0x01U << 5), (0x00U << 5));            /* PA5_PP */
     write_bits(&GPIOA_OSPEEDR, (0x03U << 10), (0x03U << 10));         /* PA5_HS */
-    write_bits(&GPIOA_PUPDR, (0x03U << 10), (0x02U << 10));           /* PA5_PD */
+    write_bits(&GPIOA_PUPDR, (0x03U << 10), (0x00U << 10));           /* PA5_NO_PULL */
 
 }
 
@@ -221,7 +221,6 @@ void EXTI_Config(void)
     write_bits(&EXTI_RTSR, (1U << 4), (1U << 4));              // EXTI4: rising edge
     write_bits(&EXTI_FTSR, (1U << 4), (1U << 4));              // EXTI4: falling edge
     write_bits(&EXTI_RTSR, (1U << 5), (1U << 5));              // EXTI5: rising edge
-    write_bits(&EXTI_FTSR, (1U << 5), (1U << 5));              // EXTI5: falling edge
 
     /* Step 3: Enable interrupt requests */
     write_bits(&EXTI_IMR, (1U << 0), (1U << 0));               // Enable EXTI0

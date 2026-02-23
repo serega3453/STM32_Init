@@ -36,7 +36,7 @@ void check_safe_mode(void)
             flag |= (1 << 1);   // Set safe mode flag
             EXTI_Switch(0);   // Disable EXTI
 
-            Color_Selector(0x03);   //Light solid YELLOW LED
+            Color_Selector(0x04);   //Light solid BLUE LED
             usart1_puts("SM_S\r\n");
         }
         else 
@@ -44,7 +44,7 @@ void check_safe_mode(void)
             flag &= ~(1 << 1);  // Clear safe mode flag
             EXTI_Switch(1);   // Enable EXTI
 
-            Color_Selector(0x04);   //Light solid BLUE LED
+            Color_Selector(0x03);   //Light solid YELLOW LED
             usart1_puts("SM_R\r\n");
         }
         exti4_flag = 0;   // Clear safe mode interrupt flag
@@ -79,7 +79,7 @@ int main(void)
     USART1_Config();
     EXTI_Config();
     
-    mpu_preconfigure(MPU_ADDR, 0x00, 0x03);
+    //mpu_preconfigure(MPU_ADDR, 0x00, 0x03);
 
     __asm("CPSIE i");   //Enable global interrupts
 
@@ -89,13 +89,18 @@ int main(void)
     usart1_puts("HS_S\r\n");
     usart1_puts("INT_NOT\r\n");
 
-    while(exti5_flag)
+    while(read_bits(&GPIOA_IDR, (1U << 5)))
     {
         __asm("WFI");   //Wait for interrupt (low power standby)
     }
 
     usart1_puts("HS_R\r\n");
     Color_Selector(0x02);   //Light solid GREEN LED
+
+    while(1)
+    {
+        
+    }
 
     for(;;)     /*Start loop*/
     {
