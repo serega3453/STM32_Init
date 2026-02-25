@@ -13,7 +13,7 @@ volatile uint8_t Sec_Timer = 0;
 
 void EXTI0_1_IRQHandler(void)
 {
-    uint32_t pr = read_bits(&EXTI_PR, 0x03U);
+    uint32_t pr = EXTI_PR;
 
     if (pr & (1U << 0)) {
         exti0_flag = 1;   //MPU DATA_RDY
@@ -50,7 +50,7 @@ void TIM14_IRQHandler(void)
  */
 void EXTI2_3_IRQHandler(void)
 {
-    uint32_t pr = read_bits(&EXTI_PR, 0x0CU);  /* Check EXTI2 and EXTI3 pending bits */
+    uint32_t pr = EXTI_PR;
 
     if (pr & (1U << 2)) {
         exti2_flag = 1;  //FCU INT
@@ -66,11 +66,6 @@ void EXTI2_3_IRQHandler(void)
 void EXTI4_15_IRQHandler(void)
 {
     uint32_t pr = EXTI_PR;
-
-    usart1_puts("EXTI4_15 IRQ PR=");
-    for (int i = 7; i >= 0; --i)
-        usart1_putc("0123456789ABCDEF"[(pr >> (i*4)) & 0x0F]);
-    usart1_puts("\r\n");
 
     if (pr & (1U << 4)) {
         exti4_flag = 1;

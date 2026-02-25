@@ -37,7 +37,7 @@ void check_safe_mode(void)
             EXTI_Switch(0);   // Disable EXTI
 
             Color_Selector(0x04);   //Light solid BLUE LED
-            usart1_puts("SM_S\r\n");
+            usart1_puts("SS_S\r\n");
         }
         else 
         {
@@ -45,7 +45,7 @@ void check_safe_mode(void)
             EXTI_Switch(1);   // Enable EXTI
 
             Color_Selector(0x03);   //Light solid YELLOW LED
-            usart1_puts("SM_R\r\n");
+            usart1_puts("SS_R\r\n");
         }
         exti4_flag = 0;   // Clear safe mode interrupt flag
     }
@@ -78,12 +78,13 @@ int main(void)
     I2C1_Config();
     USART1_Config();
     EXTI_Config();
-    
-    //mpu_preconfigure(MPU_ADDR, 0x00, 0x03);
+
+    mpu_preconfigure(MPU_ADDR, 0x00, 0x03);
 
     __asm("CPSIE i");   //Enable global interrupts
 
     exti5_flag = read_bits(&GPIOA_IDR, (1U << 5));
+    check_safe_mode();
 
     Color_Selector(0x00);   //All LEDs off
     usart1_puts("HS_S\r\n");
@@ -96,11 +97,6 @@ int main(void)
 
     usart1_puts("HS_R\r\n");
     Color_Selector(0x02);   //Light solid GREEN LED
-
-    while(1)
-    {
-        
-    }
 
     for(;;)     /*Start loop*/
     {
@@ -160,6 +156,8 @@ int main(void)
             if (exti1_flag) 
             {
                 exti1_flag = 0;
+
+                write_reg(&GPIOA_BSRR, 0x01 << 3);  //Raise the pin (set PA3 or configured output)
                 flag &= ~(1 << 0); /* stop LED cycling */
                 Color_Selector(0x01); /* solid red to indicate impact */
                 usart1_puts("INT_CON\r\n");
@@ -173,6 +171,8 @@ int main(void)
             if (exti2_flag) 
             {
                 exti2_flag = 0;
+
+                write_reg(&GPIOA_BSRR, 0x01 << 3);  //Raise the pin (set PA3 or configured output)
                 flag &= ~(1 << 0); /* stop LED cycling */
                 Color_Selector(0x01); /* solid red to indicate impact */
                 usart1_puts("INT_FCU\r\n");
