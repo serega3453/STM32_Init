@@ -54,7 +54,7 @@ void EXTI2_3_IRQHandler(void)
 
     if (pr & (1U << 2)) {
         exti2_flag = 1;  //FCU INT
-        write_bits(&EXTI_PR, (1U << 2), (1U << 2));
+        write_reg(&EXTI_PR, (1U << 2));   // W1C
     }
 
     /* EXTI3 is unused in this project (safe-mode moved to PA4/EXTI4) */
