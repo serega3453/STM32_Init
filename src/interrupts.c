@@ -31,16 +31,6 @@ void TIM14_IRQHandler(void)
     /* Clear UIF by writing to SR (write-1-to-clear) */
     write_reg(&TIM14_SR, 0);
     Sec_Timer = 1;
-
-    //if (read_bits(&GPIOA_IDR, (1U << 5))) 
-    //{
-        //write_reg(&SCB_AIRCR, 0x05FA0004U); //reset
-        //while(1);                           //wait for reset
-    //}
-    //else 
-    //{
-        //exti5_flag = 0;
-    //}
 }
 
 /**
@@ -56,8 +46,6 @@ void EXTI2_3_IRQHandler(void)
         exti2_flag = 1;  //FCU INT
         write_reg(&EXTI_PR, (1U << 2));   // W1C
     }
-
-    /* EXTI3 is unused in this project (safe-mode moved to PA4/EXTI4) */
 }
 
 /**
@@ -68,13 +56,13 @@ void EXTI4_15_IRQHandler(void)
     uint32_t pr = EXTI_PR;
 
     if (pr & (1U << 4)) {
-        exti4_flag = 1;
-        write_reg(&EXTI_PR, (1U << 4));   // W1C
+        exti4_flag = 1;                         //Set safe mode flag to trigger check_safe_mode() in main loop
+        write_reg(&EXTI_PR, (1U << 4));         // W1C
     }
 
     if (pr & (1U << 5)) {
-        write_reg(&EXTI_PR, (1U << 5));   // W1C
-        write_reg(&SCB_AIRCR, 0x05FA0004U);
+        write_reg(&EXTI_PR, (1U << 5));         // W1C
+        write_reg(&SCB_AIRCR, 0x05FA0004U);     // System reset via AIRCR (VECTKEY=0x5FA, SYSRESETREQ=1)
         while (1) {}
     }
 }

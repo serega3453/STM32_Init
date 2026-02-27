@@ -8,8 +8,12 @@
 
 /* MPU6050 I2C slave address (7-bit, 0x68 = 0b1101000) */
 #define MPU_ADDR 0x68
-unsigned char flag;
-uint32_t color;
+unsigned char flag = 0b00000000;
+
+uint8_t safe_timer_value = 120;
+uint8_t safe_timer_count = 0;
+
+uint16_t impact_sensitivity = 0xBFFF;   /* Impact detection sensitivity (raw LSB units). Larger = less sensitive. Tweak as needed. */
 
 /* Numbers from 0 to 7 select a desired LED color */
 void Color_Selector(uint8_t color)
@@ -53,52 +57,38 @@ void check_safe_mode(void)
 
 int main(void)
 {
-    /*
-    bit 0 - LED cycling control 
-    bit 1 - safe mode control
-    bit 2 - hard safe mode control
-    */
-    flag = 0b00000000;       //safe mode disabled, LED cycling off
-    color = 0;               /* PWM compare value (0..2399, max is ARR=2399) */
+    RCC_EnableClock();                                  //Enable peripheral clocks
 
-    uint8_t safe_timer_value = 120;
-    uint8_t safe_timer_count = 0;
-
-    /* Impact detection sensitivity (raw LSB units). Larger = less sensitive. Tweak as needed. */
-    uint16_t impact_sensitivity = 0xBFFF;
-
-    RCC_EnableClock();
-
-    GPIOA_Config();
-    GPIOB_Config();
-    GPIOF_Config();
+    GPIOA_Config();                                     //Configure GPIOA pins
+    GPIOB_Config();                                     //Configure GPIOB pins
+    GPIOF_Config();                                     //Configure GPIOF pins
     
-    TIM3_Config();
-    TIM14_Config();
-    I2C1_Config();
-    USART1_Config();
-    EXTI_Config();
+    TIM3_Config();                                      //Configure TIM3 for PWM LED control
+    TIM14_Config();                                     //Configure TIM14 for 1-second periodic interrupts
+    I2C1_Config();                                      //Configure I2C1 for MPU6050 communication
+    USART1_Config();                                    //Configure USART1 for serial communication
+    EXTI_Config();                                      //Configure EXTI for interrupt inputs
 
     mpu_preconfigure(MPU_ADDR, 0x00, 0x03);
 
-    __asm("CPSIE i");   //Enable global interrupts
+    __asm("CPSIE i");                                   //Enable global interrupts
 
-    exti5_flag = read_bits(&GPIOA_IDR, (1U << 5));
-    check_safe_mode();
+    exti5_flag = read_bits(&GPIOA_IDR, (1U << 5));      //Read hard safe mode input (PA5) at startup to determine initial state
+    check_safe_mode();                                  //Check safe mode state at startup and set initial LED color ajnd flags accordingly
 
-    Color_Selector(0x00);   //All LEDs off
-    usart1_puts("HS_S\r\n");
-    usart1_puts("INT_NOT\r\n");
+    Color_Selector(0x00);                               //All LEDs off
+    usart1_puts("HS_S\r\n");                            //Hard Safe mode Set
+    usart1_puts("INT_NOT\r\n");                         //Not Initiated
 
-    while(read_bits(&GPIOA_IDR, (1U << 5)))
+    while(read_bits(&GPIOA_IDR, (1U << 5)))             //Hard safe mode check
     {
-        __asm("WFI");   //Wait for interrupt (low power standby)
+        __asm("WFI");                                   //Wait for interrupt (low power standby)
     }
 
-    usart1_puts("HS_R\r\n");
-    Color_Selector(0x02);   //Light solid GREEN LED
+    usart1_puts("HS_R\r\n");                            //Hard Safe mode Reset
+    Color_Selector(0x02);                               //Light solid GREEN LED
 
-    for(;;)     /*Start loop*/
+    for(;;)                                             //Start loop
     {
         if (Sec_Timer)
         {
@@ -122,18 +112,18 @@ int main(void)
         }
     }
 
-    exti0_flag = 0;                                 //Clear any pending MPU INT flag
-    exti1_flag = 0;                                 //Clear any pending Contactor INT flag
-    exti2_flag = 0;                                 //Clear any pending FCU INT flag
+    exti0_flag = 0;                                     //Clear any pending MPU INT flag
+    exti1_flag = 0;                                     //Clear any pending Contactor INT flag
+    exti2_flag = 0;                                     //Clear any pending FCU INT flag
 
-    exti4_flag = 1;                                 //Set safe mode flag to trigger check
+    exti4_flag = 1;                                     //Set safe mode flag to trigger check
 
-    for(;;)     /*Main loop*/
+    for(;;)                                             //Main loop
     {
-        __asm("WFI");   //Wait for interrupt (low power standby)
-        check_safe_mode();
+        __asm("WFI");                                   //Wait for interrupt (low power standby)
+        check_safe_mode();                              //Check safe mode state on each wakeup (timer or external interrupt)
 
-        if ((flag >> 1) == 0)       //Normal operation
+        if ((flag >> 1) == 0)                           //Normal operation
         {
             if (exti0_flag) 
             {
@@ -142,7 +132,6 @@ int main(void)
                 if (mpu_detect_impact(MPU_ADDR, impact_sensitivity)) 
                 {
                     write_reg(&GPIOA_BSRR, 0x01 << 3);  //Raise the pin (set PA3 or configured output)
-                    flag &= ~(1 << 0);                  /* stop LED cycling */
                     Color_Selector(0x01);               //Light solid RED LED
                     usart1_puts("INT_MPU\r\n");
                 
@@ -157,14 +146,13 @@ int main(void)
             {
                 exti1_flag = 0;
 
-                write_reg(&GPIOA_BSRR, 0x01 << 3);  //Raise the pin (set PA3 or configured output)
-                flag &= ~(1 << 0); /* stop LED cycling */
-                Color_Selector(0x01); /* solid red to indicate impact */
+                write_reg(&GPIOA_BSRR, 0x01 << 3);      //Raise the pin (set PA3 or configured output)
+                Color_Selector(0x01);                   //Solid red to indicate impact
                 usart1_puts("INT_CON\r\n");
 
                 for (;;) 
                 {
-                    __asm("WFI");                   //Stop execution, INIT set
+                    __asm("WFI");                       //Stop execution, INIT set
                 }
             }
 
@@ -172,14 +160,13 @@ int main(void)
             {
                 exti2_flag = 0;
 
-                write_reg(&GPIOA_BSRR, 0x01 << 3);  //Raise the pin (set PA3 or configured output)
-                flag &= ~(1 << 0); /* stop LED cycling */
-                Color_Selector(0x01); /* solid red to indicate impact */
+                write_reg(&GPIOA_BSRR, 0x01 << 3);      //Raise the pin (set PA3 or configured output)
+                Color_Selector(0x01);                   //Solid red to indicate impact
                 usart1_puts("INT_FCU\r\n");
 
                 for (;;) 
                 {
-                    __asm("WFI");                   //Stop execution, INIT set
+                    __asm("WFI");                       //Stop execution, INIT set
                 }
             }
         }
