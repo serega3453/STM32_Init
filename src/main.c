@@ -10,10 +10,10 @@
 #define MPU_ADDR 0x68
 unsigned char flag = 0b00000000;
 
-uint8_t safe_timer_value = 120;
-uint8_t safe_timer_count = 0;
+uint8_t safe_timer_value = 120;                         //Duration of initial safe mode, s
+uint8_t safe_timer_count = 0;                           //Timer counter
 
-uint16_t impact_sensitivity = 0xBFFF;   /* Impact detection sensitivity (raw LSB units). Larger = less sensitive. Tweak as needed. */
+uint16_t impact_sensitivity = 0xBFFF;                   //Impact detection sensitivity (raw LSB units). Larger = less sensitive. Tweak as needed
 
 /* Numbers from 0 to 7 select a desired LED color */
 void Color_Selector(uint8_t color)
@@ -37,21 +37,21 @@ void check_safe_mode(void)
     {
         if (read_bits(&GPIOA_IDR, (1U << 4)))
         {
-            flag |= (1 << 1);   // Set safe mode flag
-            EXTI_Switch(0);   // Disable EXTI
+            flag |= (1 << 1);                           // Set safe mode flag
+            EXTI_Switch(0);                             // Disable EXTI
 
-            Color_Selector(0x04);   //Light solid BLUE LED
+            Color_Selector(0x04);                       //Light solid BLUE LED
             usart1_puts("SS_S\r\n");
         }
         else 
         {
-            flag &= ~(1 << 1);  // Clear safe mode flag
-            EXTI_Switch(1);   // Enable EXTI
+            flag &= ~(1 << 1);                          // Clear safe mode flag
+            EXTI_Switch(1);                             // Enable EXTI
 
-            Color_Selector(0x03);   //Light solid YELLOW LED
+            Color_Selector(0x03);                       //Light solid YELLOW LED
             usart1_puts("SS_R\r\n");
         }
-        exti4_flag = 0;   // Clear safe mode interrupt flag
+        exti4_flag = 0;                                 // Clear safe mode interrupt flag
     }
 }
 

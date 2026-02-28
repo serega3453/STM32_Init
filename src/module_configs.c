@@ -8,15 +8,14 @@
  */
 void RCC_EnableClock()
 {
-    write_bits(&RCC_APB1ENR, (0x01U << 1), (0x01U << 1));              /* TIM3_EN */
-    write_bits(&RCC_APB1ENR, (0x01U << 8), (0x01U << 8));                    // TIM14_EN
-    write_bits(&RCC_APB1ENR, (0x01U << 21), (0x01U << 21));            /* I2C1_EN */
-    write_bits(&RCC_APB2ENR, (0x01U << 14), (0x01U << 14));            /* USART1_EN (on APB2) */
-    write_bits(&RCC_APB2ENR, (0x01U << 0), (0x01U << 0));              /* SYSCFG_EN */
+    write_bits(&RCC_APB1ENR, (0x01U << 1), (0x01U << 1));               // TIM3_EN
+    write_bits(&RCC_APB1ENR, (0x01U << 8), (0x01U << 8));               // TIM14_EN
+    write_bits(&RCC_APB1ENR, (0x01U << 21), (0x01U << 21));             // I2C1_EN
+    write_bits(&RCC_APB2ENR, (0x01U << 14), (0x01U << 14));             // USART1_EN (on APB2)
+    write_bits(&RCC_APB2ENR, (0x01U << 0), (0x01U << 0));               // SYSCFG_EN
     raw_delay(10000);
-    write_bits(&RCC_AHBENR, (0x03U << 17), 0x03U << 17);               /* GPIOA_EN && GPIOB_EN */
-    write_bits(&RCC_AHBENR, (0x01U << 22), (0x01U << 22));             /* GPIOF_EN */
-
+    write_bits(&RCC_AHBENR, (0x03U << 17), 0x03U << 17);                // GPIOA_EN && GPIOB_EN
+    write_bits(&RCC_AHBENR, (0x01U << 22), (0x01U << 22));              // GPIOF_EN
     raw_delay(10000);
 }
 
@@ -32,54 +31,54 @@ void RCC_EnableClock()
 void GPIOA_Config()
 {
     /* PA6, PA7 - TIM3 PWM outputs (LED channels) */
-    write_bits(&GPIOA_MODER, (0x0FU << 12), (0x0AU << 12)); //PA6_AF && PA7_AF
-    write_bits(&GPIOA_OTYPER, (0x03U << 6), (0x00U << 6)); //PA6_PP && PA7_PP
-    write_bits(&GPIOA_OSPEEDR, (0x0FU << 12), (0x0FU << 12)); //PA6_HS && PA7_HS
-    write_bits(&GPIOA_PUPDR, (0x0FU << 12), (0x00U << 12)); //PA6_PUNPD && PA7_PUNPD
-    write_bits(&GPIOA_AFRL, (0xFFU << 24), (0x11U << 24)); //PA6_AF1 && PA7_AF1
+    write_bits(&GPIOA_MODER, (0x0FU << 12), (0x0AU << 12));             //PA6_AF && PA7_AF
+    write_bits(&GPIOA_OTYPER, (0x03U << 6), (0x00U << 6));              //PA6_PP && PA7_PP
+    write_bits(&GPIOA_OSPEEDR, (0x0FU << 12), (0x0FU << 12));           //PA6_HS && PA7_HS
+    write_bits(&GPIOA_PUPDR, (0x0FU << 12), (0x00U << 12));             //PA6_PUNPD && PA7_PUNPD
+    write_bits(&GPIOA_AFRL, (0xFFU << 24), (0x11U << 24));              //PA6_AF1 && PA7_AF1
 
     /* PA9, PA10 - USART1 TX/RX (AF1) */
-    write_bits(&GPIOA_MODER, (0x0FU << 18), (0x0AU << 18)); // PA9_AF && PA10_AF
-    write_bits(&GPIOA_OTYPER, (0x03U << 9), (0x00U << 9));  // push-pull
-    write_bits(&GPIOA_OSPEEDR, (0x0FU << 18), (0x0FU << 18)); // high speed
-    write_bits(&GPIOA_PUPDR, (0x0FU << 18), (0x04U << 18)); // PA9_NPUNPD, PA10_PU
-    write_bits(&GPIOA_AFRH, (0xFFU << 4), (0x11U << 4)); // AF1 для обеих
+    write_bits(&GPIOA_MODER, (0x0FU << 18), (0x0AU << 18));             //PA9_AF && PA10_AF
+    write_bits(&GPIOA_OTYPER, (0x03U << 9), (0x00U << 9));              //push-pull
+    write_bits(&GPIOA_OSPEEDR, (0x0FU << 18), (0x0FU << 18));           //high speed
+    write_bits(&GPIOA_PUPDR, (0x0FU << 18), (0x04U << 18));             //PA9_NPUNPD, PA10_PU
+    write_bits(&GPIOA_AFRH, (0xFFU << 4), (0x11U << 4));                //AF1 для обеих
 
     //GPIOA PA0 - Input (MPU INT)
-    write_bits(&GPIOA_MODER, (0x03U << 0), (0x00U << 0)); //PA0_IN
-    write_bits(&GPIOA_OTYPER, (0x01U << 0), (0x00U << 0)); //PA0_PP
-    write_bits(&GPIOA_OSPEEDR, (0x03U << 0), (0x03U << 0)); //PA0_HS
-    write_bits(&GPIOA_PUPDR, (0x03U << 0), (0x02U << 0)); //PA0_PD
+    write_bits(&GPIOA_MODER, (0x03U << 0), (0x00U << 0));               //PA0_IN
+    write_bits(&GPIOA_OTYPER, (0x01U << 0), (0x00U << 0));              //PA0_PP
+    write_bits(&GPIOA_OSPEEDR, (0x03U << 0), (0x03U << 0));             //PA0_HS
+    write_bits(&GPIOA_PUPDR, (0x03U << 0), (0x02U << 0));               //PA0_PD
 
     //GPIOA PA1 - Input (Contactor INT)
-    write_bits(&GPIOA_MODER, (0x03U << 2), (0x00U << 2)); //PA1_IN
-    write_bits(&GPIOA_OTYPER, (0x01U << 1), (0x00U << 1)); //PA1_PP
-    write_bits(&GPIOA_OSPEEDR, (0x03U << 2), (0x03U << 2)); //PA1_HS
-    write_bits(&GPIOA_PUPDR, (0x03U << 2), (0x02U << 2)); //PA1_PD
+    write_bits(&GPIOA_MODER, (0x03U << 2), (0x00U << 2));               //PA1_IN
+    write_bits(&GPIOA_OTYPER, (0x01U << 1), (0x00U << 1));              //PA1_PP
+    write_bits(&GPIOA_OSPEEDR, (0x03U << 2), (0x03U << 2));             //PA1_HS
+    write_bits(&GPIOA_PUPDR, (0x03U << 2), (0x02U << 2));               //PA1_PD
 
     /* PA2 - Input (FCU INT) */
-    write_bits(&GPIOA_MODER,   (0x03U << 4), (0x00U << 4));           /* PA2_IN */
-    write_bits(&GPIOA_OTYPER,  (0x01U << 2), (0x00U << 2));           /* PA2_PP */
-    write_bits(&GPIOA_OSPEEDR, (0x03U << 4), (0x03U << 4));           /* PA2_HS */
-    write_bits(&GPIOA_PUPDR,   (0x03U << 4), (0x02U << 4));           /* PA2_PD */
+    write_bits(&GPIOA_MODER,   (0x03U << 4), (0x00U << 4));             //PA2_IN
+    write_bits(&GPIOA_OTYPER,  (0x01U << 2), (0x00U << 2));             //PA2_PP
+    write_bits(&GPIOA_OSPEEDR, (0x03U << 4), (0x03U << 4));             //PA2_HS
+    write_bits(&GPIOA_PUPDR,   (0x03U << 4), (0x02U << 4));             //PA2_PD
 
     /* PA3 - MOSFET gate output (digital push-pull, high-speed) */
-    write_bits(&GPIOA_MODER,   (0x03U << 6), (0x01U << 6));           /* PA3_OUT */
-    write_bits(&GPIOA_OTYPER,  (0x01U << 3), (0x00U << 3));           /* PA3_PP (push-pull) */
-    write_bits(&GPIOA_OSPEEDR, (0x03U << 6), (0x03U << 6));           /* PA3_HS (high-speed) */
-    write_bits(&GPIOA_PUPDR,   (0x03U << 6), (0x00U << 6));           /* PA3_NO_PULL */
+    write_bits(&GPIOA_MODER,   (0x03U << 6), (0x01U << 6));             //PA3_OUT
+    write_bits(&GPIOA_OTYPER,  (0x01U << 3), (0x00U << 3));             //PA3_PP (push-pull)
+    write_bits(&GPIOA_OSPEEDR, (0x03U << 6), (0x03U << 6));             //PA3_HS (high-speed)
+    write_bits(&GPIOA_PUPDR,   (0x03U << 6), (0x00U << 6));             //PA3_NO_PULL
 
     /* PA4 - Safe mode input from FCU */
-    write_bits(&GPIOA_MODER,   (0x03U << 8), (0x00U << 8));           /* PA4_IN */
-    write_bits(&GPIOA_OTYPER,  (0x01U << 4), (0x00U << 4));           /* PA4_PP */
-    write_bits(&GPIOA_OSPEEDR, (0x03U << 8), (0x03U << 8));           /* PA4_HS */
-    write_bits(&GPIOA_PUPDR,   (0x03U << 8), (0x02U << 8));           /* PA4_PD */
+    write_bits(&GPIOA_MODER,   (0x03U << 8), (0x00U << 8));             //PA4_IN
+    write_bits(&GPIOA_OTYPER,  (0x01U << 4), (0x00U << 4));             //PA4_PP
+    write_bits(&GPIOA_OSPEEDR, (0x03U << 8), (0x03U << 8));             //PA4_HS
+    write_bits(&GPIOA_PUPDR,   (0x03U << 8), (0x02U << 8));             //PA4_PD
 
     /* PA5 - Hard safe mode input from reed switch */
-    write_bits(&GPIOA_MODER, (0x03U << 10), (0x00U << 10));           /* PA5 IN */
-    write_bits(&GPIOA_OTYPER, (0x01U << 5), (0x00U << 5));            /* PA5_PP */
-    write_bits(&GPIOA_OSPEEDR, (0x03U << 10), (0x03U << 10));         /* PA5_HS */
-    write_bits(&GPIOA_PUPDR, (0x03U << 10), (0x00U << 10));           /* PA5_NO_PULL */
+    write_bits(&GPIOA_MODER, (0x03U << 10), (0x00U << 10));             //PA5 IN
+    write_bits(&GPIOA_OTYPER, (0x01U << 5), (0x00U << 5));              //PA5_PP
+    write_bits(&GPIOA_OSPEEDR, (0x03U << 10), (0x03U << 10));           //PA5_HS
+    write_bits(&GPIOA_PUPDR, (0x03U << 10), (0x00U << 10));             //PA5_NO_PULL
 
 }
 
@@ -90,11 +89,11 @@ void GPIOA_Config()
 void GPIOB_Config()
 {
     /* PB1 - TIM3 PWM output (LED channel 2) via AF1 */
-    write_bits(&GPIOB_MODER, (0x03U << 2), (0x02U << 2));
-    write_bits(&GPIOB_OTYPER, (0x01U << 1), (0x00U << 1));
-    write_bits(&GPIOB_OSPEEDR, (0x03U << 2), (0x03U << 2));
-    write_bits(&GPIOB_PUPDR, (0x03U << 2), (0x00U << 2));
-    write_bits(&GPIOB_AFRL, (0x0FU << 4), (0x01U << 4));
+    write_bits(&GPIOB_MODER, (0x03U << 2), (0x02U << 2));               //PB1_AF
+    write_bits(&GPIOB_OTYPER, (0x01U << 1), (0x00U << 1));              //PB1_PP
+    write_bits(&GPIOB_OSPEEDR, (0x03U << 2), (0x03U << 2));             //PB1_HS
+    write_bits(&GPIOB_PUPDR, (0x03U << 2), (0x00U << 2));               //PB1_NO_PULL
+    write_bits(&GPIOB_AFRL, (0x0FU << 4), (0x01U << 4));                //PB1_AF1
 }
 
 /**
@@ -104,11 +103,11 @@ void GPIOB_Config()
 void GPIOF_Config()
 {
     /* PF0, PF1 - I2C1 SCL/SDA (open-drain, I2C bus pull-ups required externally) */
-    write_bits(&GPIOF_MODER, (0x0FU << 0), (0x0AU << 0));
-    write_bits(&GPIOF_OTYPER, (0x03U << 0), (0x03U << 0));
-    write_bits(&GPIOF_OSPEEDR, (0x0FU << 0), (0x0FU << 0));
-    write_bits(&GPIOF_PUPDR, (0x0FU << 0), (0x00U << 0));
-    write_bits(&GPIOF_AFRL, (0xFFU << 0), (0x11U << 0));
+    write_bits(&GPIOF_MODER, (0x0FU << 0), (0x0AU << 0));               //PF0_AF && PF1_AF
+    write_bits(&GPIOF_OTYPER, (0x03U << 0), (0x03U << 0));              //PF0_OD && PF1_OD
+    write_bits(&GPIOF_OSPEEDR, (0x0FU << 0), (0x0FU << 0));             //PF0_HS && PF1_HS
+    write_bits(&GPIOF_PUPDR, (0x0FU << 0), (0x00U << 0));               //PF0_NO_PULL, PF1_NO_PULL
+    write_bits(&GPIOF_AFRL, (0xFFU << 0), (0x11U << 0));                //PF0_AF1 && PF1_AF1
 }
 
 /**
@@ -123,19 +122,19 @@ void GPIOF_Config()
 void TIM3_Config()
 {
     /* Disable timer during configuration */
-    write_bits(&TIM3_CR1, (0x01U << 0), (0x00U << 0));
-    write_bits(&TIM3_CR1, (0x01U << 7), (0x01U << 7));
-    write_reg(&TIM3_PSC, 0x00000000);
-    write_reg(&TIM3_ARR, 2399);
-    write_reg(&TIM3_CNT, 0x00000000);
-    write_reg(&TIM3_CCMR1, 0x00006868);
-    write_reg(&TIM3_CCMR2, 0x00006800);
-    write_reg(&TIM3_CCER, 0x00001011);
-    write_reg(&TIM3_CCR1, 0x00000000);
-    write_reg(&TIM3_CCR2, 0x00000000);
-    write_reg(&TIM3_CCR4, 0x00000000);
-    write_reg(&TIM3_EGR, 0x00000001);
-    write_bits(&TIM3_CR1, (0x01U << 0), (0x01U << 0));
+    write_bits(&TIM3_CR1, (0x01U << 0), (0x00U << 0));                  //CEN=0
+    write_bits(&TIM3_CR1, (0x01U << 7), (0x01U << 7));                  //ARPE=1
+    write_reg(&TIM3_PSC, 0x00000000);                                   //PSC=0
+    write_reg(&TIM3_ARR, 2399);                                         //ARR=2399
+    write_reg(&TIM3_CNT, 0x00000000);                                   //Reset counter
+    write_reg(&TIM3_CCMR1, 0x00006868);                                 //CCMR1: CH1=PWM mode 1, CH2=PWM mode 1
+    write_reg(&TIM3_CCMR2, 0x00006800);                                 //CCMR2: CH4=PWM mode 1
+    write_reg(&TIM3_CCER, 0x00001011);                                  //CCER: CC1E=1, CC2E=1, CC4E=1 (enable outputs)
+    write_reg(&TIM3_CCR1, 0x00000000);                                  //CCR1=0 (0% duty cycle)
+    write_reg(&TIM3_CCR2, 0x00000000);                                  //CCR2=0 (0% duty cycle)
+    write_reg(&TIM3_CCR4, 0x00000000);                                  //CCR4=0 (0% duty cycle)
+    write_reg(&TIM3_EGR, 0x00000001);                                   //UG=1: generate update event to load registers
+    write_bits(&TIM3_CR1, (0x01U << 0), (0x01U << 0));                  //CEN=1: start timer
 }
 
 /**
@@ -147,23 +146,14 @@ void TIM3_Config()
  */
 void TIM14_Config()
 {
-    /* Disable timer before configuration */
-    write_bits(&TIM14_CR1, (1U<<0), 0);            /* CEN=0: stop timer */
-    
-    /* Configure prescaler and period */
-    write_reg(&TIM14_PSC, 7999);                   /* PSC: 8MHz / 8000 = 1 kHz */
-    write_reg(&TIM14_ARR, 999);                    /* ARR: 1000 ticks = 1 second */
-    write_reg(&TIM14_CNT, 0);                      /* Reset counter */
-    
-    /* Enable update interrupt */
-    write_bits(&TIM14_DIER, (1U<<0), (1U<<0));     /* UIE=1: enable update interrupt */
-    
-    /* Enable NVIC IRQ 19 BEFORE starting timer */
-    volatile uint32_t* NVIC_ISER0 = (volatile uint32_t*)0xE000E100U;
-    *NVIC_ISER0 = (1U << 19);                      /* Enable TIM14_IRQn (IRQ 19) */
-    
-    /* Start timer */
-    write_bits(&TIM14_CR1, (1U<<0), (1U<<0));      /* CEN=1: start timer */
+    write_bits(&TIM14_CR1, (1U<<0), 0);                                 //CEN=0: stop timer
+    write_reg(&TIM14_PSC, 7999);                                        //PSC: 8MHz / 8000 = 1 kHz
+    write_reg(&TIM14_ARR, 999);                                         //ARR: 1000 ticks = 1 second
+    write_reg(&TIM14_CNT, 0);                                           //Reset counter
+    write_bits(&TIM14_DIER, (1U<<0), (1U<<0));                          //UIE=1: enable update interrupt
+    volatile uint32_t* NVIC_ISER0 = (volatile uint32_t*)0xE000E100U;    //NVIC_ISER0 address
+    *NVIC_ISER0 = (1U << 19);                                           //Enable TIM14_IRQn (IRQ 19)
+    write_bits(&TIM14_CR1, (1U<<0), (1U<<0));                           //CEN=1: start timer
 }
 
 /**
@@ -174,9 +164,9 @@ void TIM14_Config()
 void I2C1_Config()
 {
     /* Disable I2C before writing TIMINGR (register is locked when I2C is enabled) */
-    write_bits(&I2C1_CR1, (0x01U << 0), (0x00U << 0));
-    write_reg(&I2C1_TIMINGR, (0x00201D2B));
-    write_bits(&I2C1_CR1, (0x01U << 0), (0x01U << 0));
+    write_bits(&I2C1_CR1, (0x01U << 0), (0x00U << 0));                  //PE=0: disable I2C 
+    write_reg(&I2C1_TIMINGR, (0x00201D2B));                             //TIMINGR: 400 kHz @ 48 MHz (pre-calculated)
+    write_bits(&I2C1_CR1, (0x01U << 0), (0x01U << 0));                  //PE=1: enable I2C
 }
 
 /**
@@ -186,12 +176,12 @@ void I2C1_Config()
  */
 void USART1_Config()
 {
-    write_bits(&USART1_CR1, (1U<<0), 0);        /* Disable USART before configuration */
-    write_reg(&USART1_BRR, 0x0045);
-    write_bits(&USART1_CR2, (3U<<12), 0);
-    write_bits(&USART1_CR1, (1U<<3), (1U<<3));
-    write_bits(&USART1_CR1, (1U<<2), (1U<<2));
-    write_bits(&USART1_CR1, (1U<<0), (1U<<0)); /* Enable USART */
+    write_bits(&USART1_CR1, (1U<<0), 0);                                //Disable USART before configuration
+    write_reg(&USART1_BRR, 0x0045);                                     //BRR: 115200 bps @ 48 MHz PCLK (pre-calculated)
+    write_bits(&USART1_CR2, (3U<<12), 0);                               //Stop bits: 00 = 1 stop bit
+    write_bits(&USART1_CR1, (1U<<3), (1U<<3));                          //TE=1: enable transmitter
+    write_bits(&USART1_CR1, (1U<<2), (1U<<2));                          //RE=1: enable receiver
+    write_bits(&USART1_CR1, (1U<<0), (1U<<0));                          //UE=1: enable USART
 }
 
 /**
@@ -206,28 +196,26 @@ void EXTI_Config(void)
 {
     /* Step 1: Connect PA0, PA1, PA2 to EXTI0, EXTI1, EXTI2 lines via SYSCFG */
     /* EXTI0 <- PA0, EXTI1 <- PA1, EXTI2 <- PA2 (port A = 0) */
-    write_bits(&SYSCFG_EXTICR1, (0x0FU << 0), (0x00U << 0));   // EXTI0 = Port A (DATA_RDY)
-    write_bits(&SYSCFG_EXTICR1, (0x0FU << 4), (0x00U << 4));   // EXTI1 = Port A (Contactor INT)
-    write_bits(&SYSCFG_EXTICR1, (0x0FU << 8), (0x00U << 8));   // EXTI2 = Port A (FCU INT)
-    /* EXTI3 is unused here; safe-mode input is on PA4 -> map EXTI4 to Port A (SYSCFG_EXTICR2[3:0]) */
-    write_bits(&SYSCFG_EXTICR2, (0x0FU << 0), (0x00U << 0));   // EXTI4 = Port A (safe-mode input)
-    write_bits(&SYSCFG_EXTICR2, (0x0FU << 4), (0x00U << 4));   // EXTI5 = Port A (hard safe-mode input)
+    write_bits(&SYSCFG_EXTICR1, (0x0FU << 0), (0x00U << 0));            //EXTI0 = Port A (DATA_RDY)
+    write_bits(&SYSCFG_EXTICR1, (0x0FU << 4), (0x00U << 4));            //EXTI1 = Port A (Contactor INT)
+    write_bits(&SYSCFG_EXTICR1, (0x0FU << 8), (0x00U << 8));            //EXTI2 = Port A (FCU INT)
+    write_bits(&SYSCFG_EXTICR2, (0x0FU << 0), (0x00U << 0));            //EXTI4 = Port A (safe-mode input)
+    write_bits(&SYSCFG_EXTICR2, (0x0FU << 4), (0x00U << 4));            //EXTI5 = Port A (hard safe-mode input)
 
     /* Step 2: Configure trigger edges (all rising edge) */
-    write_bits(&EXTI_RTSR, (1U << 0), (1U << 0));              // EXTI0: rising edge
-    write_bits(&EXTI_RTSR, (1U << 1), (1U << 1));              // EXTI1: rising edge
-    write_bits(&EXTI_RTSR, (1U << 2), (1U << 2));              // EXTI2: rising edge
-    /* Configure EXTI4 (PA4) to trigger on both edges for safe-mode */
-    write_bits(&EXTI_RTSR, (1U << 4), (1U << 4));              // EXTI4: rising edge
-    write_bits(&EXTI_FTSR, (1U << 4), (1U << 4));              // EXTI4: falling edge
-    write_bits(&EXTI_RTSR, (1U << 5), (1U << 5));              // EXTI5: rising edge
+    write_bits(&EXTI_RTSR, (1U << 0), (1U << 0));                       //EXTI0: rising edge
+    write_bits(&EXTI_RTSR, (1U << 1), (1U << 1));                       //EXTI1: rising edge
+    write_bits(&EXTI_RTSR, (1U << 2), (1U << 2));                       //EXTI2: rising edge
+    write_bits(&EXTI_RTSR, (1U << 4), (1U << 4));                       //EXTI4: rising edge
+    write_bits(&EXTI_FTSR, (1U << 4), (1U << 4));                       //EXTI4: falling edge
+    write_bits(&EXTI_RTSR, (1U << 5), (1U << 5));                       //EXTI5: rising edge
 
     /* Step 3: Enable interrupt requests */
-    write_bits(&EXTI_IMR, (1U << 0), (1U << 0));               // Enable EXTI0
-    write_bits(&EXTI_IMR, (1U << 1), (1U << 1));               // Enable EXTI1
-    write_bits(&EXTI_IMR, (1U << 2), (1U << 2));               // Enable EXTI2
-    write_bits(&EXTI_IMR, (1U << 4), (1U << 4));               // Enable EXTI4 (PA4 safe-mode)
-    write_bits(&EXTI_IMR, (1U << 5), (1U << 5));               // Enable EXTI5 (hard safe-mode input)
+    write_bits(&EXTI_IMR, (1U << 0), (1U << 0));                        //Enable EXTI0 (PA0 DATA_RDY)
+    write_bits(&EXTI_IMR, (1U << 1), (1U << 1));                        //Enable EXTI1 (PA1 Contactor INT)
+    write_bits(&EXTI_IMR, (1U << 2), (1U << 2));                        //Enable EXTI2 (PA2 FCU INT)
+    write_bits(&EXTI_IMR, (1U << 4), (1U << 4));                        //Enable EXTI4 (PA4 safe-mode)
+    write_bits(&EXTI_IMR, (1U << 5), (1U << 5));                        //Enable EXTI5 (PA5 hard safe-mode)
 
     /* Step 4: Enable EXTI0_1_IRQn in NVIC (Nested Vectored Interrupt Controller) */
     /* IRQ #5 for EXTI0_1 */
