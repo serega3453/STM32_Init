@@ -117,10 +117,8 @@ int main(void)
 
         if ((flag >> 1) == 0)                           //Normal operation
         {
-            usart1_puts("NORMAL\r\n");
             if (exti0_flag) 
             {
-                usart1_puts("DATA_MPU\r\n");
                 exti0_flag = 0;
 
                 if (mpu_detect_impact(MPU_ADDR, impact_sensitivity)) 

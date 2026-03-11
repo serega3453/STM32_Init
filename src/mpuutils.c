@@ -126,16 +126,13 @@ int mpu_preconfigure(uint8_t dev7, uint8_t afs_sel, uint8_t dlpf_cfg)
 
 int mpu_detect_impact(uint8_t dev7, uint16_t sensitivity)
 {
-    usart1_puts("MPU detect impact: start\r\n");
     static int16_t prev_ax = 0, prev_ay = 0, prev_az = 0;
     static uint8_t initialized = 0;
     uint8_t buf[6];
     int16_t ax, ay, az;
 
     /* Read raw accel registers */
-    usart1_puts("MPU detect impact: read accel raw1\r\n");
     I2C1_ReadN(dev7, 0x3B, buf, 6);
-    usart1_puts("MPU detect impact: read accel raw2\r\n");
     ax = (int16_t)((buf[0] << 8) | buf[1]);
     ay = (int16_t)((buf[2] << 8) | buf[3]);
     az = (int16_t)((buf[4] << 8) | buf[5]);
@@ -155,9 +152,6 @@ int mpu_detect_impact(uint8_t dev7, uint16_t sensitivity)
 
     /* update previous sample for next call */
     prev_ax = ax; prev_ay = ay; prev_az = az;
-
-    usart1_put_hex8((mag2 >> 32) & 0xFF); usart1_put_hex8((mag2 >> 24) & 0xFF);
-    usart1_put_hex8((mag2 >> 16) & 0xFF); usart1_put_hex8((mag2 >> 8) & 0xFF); usart1_put_hex8(mag2 & 0xFF); usart1_puts("\r\n");
 
     if (mag2 > thr) {
         return 1;
