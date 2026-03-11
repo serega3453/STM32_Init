@@ -10,10 +10,10 @@
 #define MPU_ADDR 0x68
 unsigned char flag = 0b00000000;
 
-uint8_t safe_timer_value = 120;                         //Duration of initial safe mode, s
+uint8_t safe_timer_value = 12;                         //Duration of initial safe mode, s
 uint8_t safe_timer_count = 0;                           //Timer counter
 
-uint16_t impact_sensitivity = 0xBFFF;                   //Impact detection sensitivity (raw LSB units). Larger = less sensitive. Tweak as needed
+uint16_t impact_sensitivity = 0xAFFF;                   //Impact detection sensitivity (raw LSB units). Larger = less sensitive. Tweak as needed
 
 /* Numbers from 0 to 7 select a desired LED color */
 void Color_Selector(uint8_t color)
@@ -62,30 +62,22 @@ int main(void)
     GPIOA_Config();                                     //Configure GPIOA pins
     GPIOB_Config();                                     //Configure GPIOB pins
     GPIOF_Config();                                     //Configure GPIOF pins
-    
+
     TIM3_Config();                                      //Configure TIM3 for PWM LED control
     TIM14_Config();                                     //Configure TIM14 for 1-second periodic interrupts
     I2C1_Config();                                      //Configure I2C1 for MPU6050 communication
     USART1_Config();                                    //Configure USART1 for serial communication
     EXTI_Config();                                      //Configure EXTI for interrupt inputs
 
+    usart1_puts("System initialized\r\n");
+
     mpu_preconfigure(MPU_ADDR, 0x00, 0x03);
 
     __asm("CPSIE i");                                   //Enable global interrupts
 
-    exti5_flag = read_bits(&GPIOA_IDR, (1U << 5));      //Read hard safe mode input (PA5) at startup to determine initial state
-    check_safe_mode();                                  //Check safe mode state at startup and set initial LED color ajnd flags accordingly
+    if (read_bits(&GPIOA_IDR, (1U << 5))) {usart1_puts("HS_S\r\n");} else{usart1_puts("HS_R\r\n");}
+    while(read_bits(&GPIOA_IDR, (1U << 5))) { __asm("WFI"); }
 
-    Color_Selector(0x00);                               //All LEDs off
-    usart1_puts("HS_S\r\n");                            //Hard Safe mode Set
-    usart1_puts("INT_NOT\r\n");                         //Not Initiated
-
-    while(read_bits(&GPIOA_IDR, (1U << 5)))             //Hard safe mode check
-    {
-        __asm("WFI");                                   //Wait for interrupt (low power standby)
-    }
-
-    usart1_puts("HS_R\r\n");                            //Hard Safe mode Reset
     Color_Selector(0x02);                               //Light solid GREEN LED
 
     for(;;)                                             //Start loop
@@ -120,13 +112,15 @@ int main(void)
 
     for(;;)                                             //Main loop
     {
-        __asm("WFI");                                   //Wait for interrupt (low power standby)
+        //__asm("WFI");                                   //Wait for interrupt (low power standby)
         check_safe_mode();                              //Check safe mode state on each wakeup (timer or external interrupt)
 
         if ((flag >> 1) == 0)                           //Normal operation
         {
+            usart1_puts("NORMAL\r\n");
             if (exti0_flag) 
             {
+                usart1_puts("DATA_MPU\r\n");
                 exti0_flag = 0;
 
                 if (mpu_detect_impact(MPU_ADDR, impact_sensitivity)) 
