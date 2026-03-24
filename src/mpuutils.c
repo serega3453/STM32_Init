@@ -62,63 +62,127 @@ int mpu_preconfigure(uint8_t dev7, uint8_t afs_sel, uint8_t dlpf_cfg)
 {
     uint8_t who;
     uint8_t tmp;
+    uint8_t err;
+
+    uint8_t pwr;
+
+pwr = 0xFF;
+if (I2C1_ReadN(dev7, 0x6B, &pwr, 1)) {
+    usart1_puts("read PWR_MGMT_1 failed\r\n");
+    return 0;
+}
+usart1_puts("PWR_MGMT_1 before=0x");
+usart1_put_hex8(pwr);
+usart1_puts("\r\n");
 
     usart1_puts("MPU preconfig: start\r\n");
-
-    /* soft reset */
-    usart1_puts("MPU preconfig: soft reset (PWR_MGMT_1=0x80)\r\n");
-    I2C1_WriteByte(dev7, 0x6B, 0x80);
     raw_delay(150000);
 
     /* read WHO_AM_I */
     usart1_puts("MPU preconfig: read WHO_AM_I\r\n");
-    I2C1_ReadN(dev7, 0x75, &who, 1);
-    usart1_puts("MPU preconfig: WHO_AM_I=0x"); usart1_put_hex8(who); usart1_puts("\r\n");
+    who = 0x00;
+if (I2C1_ReadN(dev7, 0x75, &who, 1)) {
+    usart1_puts("MPU preconfig: WHO_AM_I read failed\r\n");
+    return 0;
+}
+    usart1_puts("MPU preconfig: WHO_AM_I=0x");
+    usart1_put_hex8(who);
+    usart1_puts("\r\n");
+
     if (who == 0x00) {
-        usart1_puts("MPU preconfig: WHO_AM_I==0x00 -> device not responding\r\n");
+        usart1_puts("MPU preconfig: WHO_AM_I invalid\r\n");
         return 0;
     }
 
     /* wake up */
-    usart1_puts("MPU preconfig: wake up (PWR_MGMT_1=0x00)\r\n");
-    I2C1_WriteByte(dev7, 0x6B, 0x00);
-    usart1_puts("MPU preconfig: set PWR_MGMT_2 (disable gyros)\r\n");
-    I2C1_WriteByte(dev7, 0x6C, 0x07);
+    err = I2C1_WriteByte(dev7, 0x6B, 0x00);
+    if (err) {
+        usart1_puts("MPU preconfig: PWR_MGMT_1 write failed, err=0x");
+        usart1_put_hex8(err);
+        usart1_puts("\r\n");
+        return 0;
+    }
 
-    /* Configure as requested by user:
-     * - Enable accelerometers (AFS_SEL=0 -> ±2g, maximum resolution)
-     * - Disable gyros (already set PWR_MGMT_2=0x07)
-     * - Set ACCEL_CONFIG2 DLPF=0 for maximum sample rate / bandwidth
-     * - Set LP_ACCEL_ODR=0 (max)
-     * - Disable WOM/Motion detect here (we'll not configure WOM)
-     * - Configure INT to be DATA_READY-driven (INT_ENABLE bit0)
-     */
-    usart1_puts("MPU preconfig: set ACCEL_CONFIG AFS_SEL=0 (±2g, max res)\r\n");
-    I2C1_WriteByte(dev7, 0x1C, 0x00); /* AFS_SEL=0 */
-    g_afs_sel = 0;
+    err = I2C1_WriteByte(dev7, 0x6C, 0x07);
+    if (err) {
+        usart1_puts("MPU preconfig: PWR_MGMT_2 write failed, err=0x");
+        usart1_put_hex8(err);
+        usart1_puts("\r\n");
+        return 0;
+    }
 
-    usart1_puts("MPU preconfig: set ACCEL_CONFIG2 DLPF=0 (max rate)\r\n");
-    I2C1_WriteByte(dev7, 0x1D, 0x00); /* DLPF_CFG=0 */
+    err = I2C1_WriteByte(dev7, 0x1C, (afs_sel << 3));
+    if (err) {
+        usart1_puts("MPU preconfig: ACCEL_CONFIG write failed, err=0x");
+        usart1_put_hex8(err);
+        usart1_puts("\r\n");
+        return 0;
+    }
+    g_afs_sel = afs_sel;
 
-    usart1_puts("MPU preconfig: set LP_ACCEL_ODR=0 (max)\r\n");
-    I2C1_WriteByte(dev7, 0x1E, 0x00);
+    err = I2C1_WriteByte(dev7, 0x1D, dlpf_cfg);
+    if (err) {
+        usart1_puts("MPU preconfig: ACCEL_CONFIG2 write failed, err=0x");
+        usart1_put_hex8(err);
+        usart1_puts("\r\n");
+        return 0;
+    }
 
-    /* Ensure WOM/Motion detect disabled */
-    I2C1_WriteByte(dev7, 0x69, 0x00); /* MOT_DETECT_CTRL = 0 */
-    I2C1_WriteByte(dev7, 0x1F, 0x00); /* WOM_THR = 0 */
+    err = I2C1_WriteByte(dev7, 0x1E, 0x00);
+    if (err) {
+        usart1_puts("MPU preconfig: LP_ACCEL_ODR write failed, err=0x");
+        usart1_put_hex8(err);
+        usart1_puts("\r\n");
+        return 0;
+    }
 
-    /* read back registers for confirmation */
+    err = I2C1_WriteByte(dev7, 0x69, 0x00);
+    if (err) {
+        usart1_puts("MPU preconfig: MOT_DETECT_CTRL write failed, err=0x");
+        usart1_put_hex8(err);
+        usart1_puts("\r\n");
+        return 0;
+    }
+
+    err = I2C1_WriteByte(dev7, 0x1F, 0x00);
+    if (err) {
+        usart1_puts("MPU preconfig: WOM_THR write failed, err=0x");
+        usart1_put_hex8(err);
+        usart1_puts("\r\n");
+        return 0;
+    }
+
+    /* read back */
+    tmp = 0xFF;
     I2C1_ReadN(dev7, 0x1C, &tmp, 1);
-    usart1_puts("MPU preconfig: ACCEL_CONFIG=0x"); usart1_put_hex8(tmp); usart1_puts("\r\n");
-    I2C1_ReadN(dev7, 0x1D, &tmp, 1);
-    usart1_puts("MPU preconfig: ACCEL_CONFIG2=0x"); usart1_put_hex8(tmp); usart1_puts("\r\n");
+    usart1_puts("MPU preconfig: ACCEL_CONFIG=0x");
+    usart1_put_hex8(tmp);
+    usart1_puts("\r\n");
 
-    /* Configure INT pin and enable DATA_READY interrupt only */
-    I2C1_WriteByte(dev7, 0x37, 0x10); /* INT_PIN_CFG: non-latch, active-high, push-pull */
-    I2C1_WriteByte(dev7, 0x38, 0x01); /* INT_ENABLE: DATA_READY (bit0) */
+    tmp = 0xFF;
+    I2C1_ReadN(dev7, 0x1D, &tmp, 1);
+    usart1_puts("MPU preconfig: ACCEL_CONFIG2=0x");
+    usart1_put_hex8(tmp);
+    usart1_puts("\r\n");
+
+    err = I2C1_WriteByte(dev7, 0x37, 0x10);
+    if (err) {
+        usart1_puts("MPU preconfig: INT_PIN_CFG write failed, err=0x");
+        usart1_put_hex8(err);
+        usart1_puts("\r\n");
+        return 0;
+    }
+
+    err = I2C1_WriteByte(dev7, 0x38, 0x01);
+    if (err) {
+        usart1_puts("MPU preconfig: INT_ENABLE write failed, err=0x");
+        usart1_put_hex8(err);
+        usart1_puts("\r\n");
+        return 0;
+    }
+
     raw_delay(5000);
-    I2C1_ReadN(dev7, 0x3A, &tmp, 1);  /* clear any pending INT_STATUS */
-    usart1_puts("MPU preconfig: INT cleared, INT_ENABLE=0x01 (DATA_READY)\r\n");
+    I2C1_ReadN(dev7, 0x3A, &tmp, 1);
 
     usart1_puts("MPU preconfig: done\r\n");
     return 1;

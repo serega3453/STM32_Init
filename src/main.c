@@ -13,7 +13,7 @@ unsigned char flag = 0b00000000;
 uint8_t safe_timer_value = 12;                         //Duration of initial safe mode, s
 uint8_t safe_timer_count = 0;                           //Timer counter
 
-uint16_t impact_sensitivity = 0xAFFF;                   //Impact detection sensitivity (raw LSB units). Larger = less sensitive. Tweak as needed
+uint16_t impact_sensitivity = 0x4FFF;                   //Impact detection sensitivity (raw LSB units). Larger = less sensitive. Tweak as needed
 
 /* Numbers from 0 to 7 select a desired LED color */
 void Color_Selector(uint8_t color)
@@ -70,6 +70,8 @@ int main(void)
     EXTI_Config();                                      //Configure EXTI for interrupt inputs
 
     usart1_puts("System initialized\r\n");
+
+    raw_delay(100000);                                  //Short delay to allow peripherals to stabilize
 
     mpu_preconfigure(MPU_ADDR, 0x00, 0x03);
 
