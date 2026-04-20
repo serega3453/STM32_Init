@@ -10,7 +10,7 @@
 #define MPU_ADDR 0x68
 unsigned char flag = 0b00000000;
 
-uint8_t safe_timer_value = 12;                         //Duration of initial safe mode, s
+uint8_t safe_timer_value = 120;                         //Duration of initial safe mode, s
 uint8_t safe_timer_count = 0;                           //Timer counter
 
 uint16_t impact_sensitivity = 0x4FFF;                   //Impact detection sensitivity (raw LSB units). Larger = less sensitive. Tweak as needed
